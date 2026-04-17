@@ -1,0 +1,349 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============ ENUMS ============
+
+enum Role {
+  ADMIN
+  USER
+  AGENT
+}
+
+enum PlanId {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELED
+  INCOMPLETE
+}
+
+enum WhatsappStatus {
+  DISCONNECTED
+  CONNECTING
+  CONNECTED
+  FAILED
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum MessageStatus {
+  PENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+enum MessageMediaType {
+  NONE
+  IMAGE
+  VIDEO
+  AUDIO
+  DOCUMENT
+  STICKER
+}
+
+// ============ CORE / TENANCY ============
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  isSuperAdmin Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  memberships    Membership[]
+  refreshTokens  RefreshToken[]
+  leadMovements  LeadMovement[]
+  auditLogs      AuditLog[]
+  assignedLeads  Lead[]         @relation("LeadAssignee")
+}
+
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships        Membership[]
+  subscription       Subscription?
+  whatsappInstances  WhatsappInstance[]
+  contacts           Contact[]
+  kanbanBoards       KanbanBoard[]
+  kanbanColumns      KanbanColumn[]
+  leads              Lead[]
+  leadMovements      LeadMovement[]
+  conversations      Conversation[]
+  messages           Message[]
+  automationRules    AutomationRule[]
+  auditLogs          AuditLog[]
+}
+
+model Membership {
+  id          String   @id @default(cuid())
+  userId      String
+  workspaceId String
+  role        Role     @default(USER)
+  createdAt   DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId])
+  @@index([workspaceId])
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ============ BILLING ============
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  workspaceId          String             @unique
+  plan                 PlanId             @default(FREE)
+  status               SubscriptionStatus @default(ACTIVE)
+  stripeCustomerId     String?            @unique
+  stripeSubscriptionId String?            @unique
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean            @default(false)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+// ============ WHATSAPP ============
+
+model WhatsappInstance {
+  id                 String         @id @default(cuid())
+  workspaceId        String
+  name               String
+  evolutionInstance  String         @unique
+  phoneNumber        String?
+  status             WhatsappStatus @default(DISCONNECTED)
+  qrCode             String?
+  lastConnectedAt    DateTime?
+  webhookSecret      String
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  workspace     Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  conversations Conversation[]
+
+  @@index([workspaceId])
+}
+
+// ============ CRM ============
+
+model Contact {
+  id          String   @id @default(cuid())
+  workspaceId String
+  phone       String
+  name        String?
+  avatarUrl   String?
+  email       String?
+  tags        String[] @default([])
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace     Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  leads         Lead[]
+  conversations Conversation[]
+
+  @@unique([workspaceId, phone])
+  @@index([workspaceId])
+}
+
+model KanbanBoard {
+  id          String   @id @default(cuid())
+  workspaceId String
+  name        String
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  columns   KanbanColumn[]
+  leads     Lead[]
+
+  @@index([workspaceId])
+}
+
+model KanbanColumn {
+  id          String   @id @default(cuid())
+  workspaceId String
+  boardId     String
+  name        String
+  color       String   @default("#64748b")
+  position    Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  board     KanbanBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  leads     Lead[]
+  movesFrom LeadMovement[] @relation("MovementFrom")
+  movesTo   LeadMovement[] @relation("MovementTo")
+
+  @@index([boardId])
+  @@index([workspaceId])
+}
+
+model Lead {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  boardId      String
+  columnId     String
+  contactId    String?
+  assigneeId   String?
+  title        String
+  value        Decimal? @db.Decimal(12, 2)
+  tags         String[] @default([])
+  position     Int
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  workspace Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  board     KanbanBoard    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  column    KanbanColumn   @relation(fields: [columnId], references: [id])
+  contact   Contact?       @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  assignee  User?          @relation("LeadAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  movements LeadMovement[]
+
+  @@index([workspaceId])
+  @@index([boardId])
+  @@index([columnId])
+  @@index([contactId])
+}
+
+model LeadMovement {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  leadId       String
+  fromColumnId String?
+  toColumnId   String
+  movedById    String?
+  createdAt    DateTime @default(now())
+
+  workspace  Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  lead       Lead          @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  fromColumn KanbanColumn? @relation("MovementFrom", fields: [fromColumnId], references: [id], onDelete: SetNull)
+  toColumn   KanbanColumn  @relation("MovementTo", fields: [toColumnId], references: [id])
+  movedBy    User?         @relation(fields: [movedById], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId])
+  @@index([leadId])
+}
+
+// ============ CHAT ============
+
+model Conversation {
+  id             String    @id @default(cuid())
+  workspaceId    String
+  contactId      String
+  instanceId     String
+  lastMessageAt  DateTime?
+  unreadCount    Int       @default(0)
+  archivedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  workspace Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  contact   Contact          @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  instance  WhatsappInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  messages  Message[]
+
+  @@unique([instanceId, contactId])
+  @@index([workspaceId])
+  @@index([lastMessageAt])
+}
+
+model Message {
+  id             String            @id @default(cuid())
+  workspaceId    String
+  conversationId String
+  externalId     String?           @unique
+  direction      MessageDirection
+  status         MessageStatus     @default(PENDING)
+  content        String?
+  mediaType      MessageMediaType  @default(NONE)
+  mediaUrl       String?
+  mediaMimeType  String?
+  metadata       Json              @default("{}")
+  sentAt         DateTime?
+  deliveredAt    DateTime?
+  readAt         DateTime?
+  createdAt      DateTime          @default(now())
+
+  workspace    Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([conversationId, createdAt])
+}
+
+// ============ AUTOMATION ============
+
+model AutomationRule {
+  id          String   @id @default(cuid())
+  workspaceId String
+  name        String
+  enabled     Boolean  @default(true)
+  trigger     Json
+  actions     Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+}
+
+// ============ AUDIT ============
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  workspaceId String
+  userId      String?
+  action      String
+  entity      String?
+  entityId    String?
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, createdAt])
+}
