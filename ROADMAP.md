@@ -172,20 +172,20 @@ Schema completo será escrito na **Fase 2**.
 - [x] 3.9 **Checkpoint pronto para validação do usuário**
 
 ### Fase 4 — WhatsApp + Chat tempo real 💬
-- [ ] 4.1 Serviço `EvolutionApiClient` (REST) + DTOs
-- [ ] 4.2 Módulo `whatsapp`: criar instância, obter QR Code, status da sessão
-- [ ] 4.3 Endpoint webhook `/webhooks/evolution` (valida origem por token)
-- [ ] 4.4 Processar eventos: mensagem recebida, status atualizado, conexão
-- [ ] 4.5 Fila `messages.ingest` (BullMQ) para processar mensagens de entrada
-- [ ] 4.6 Fila `messages.send` (BullMQ) com retry/backoff
-- [ ] 4.7 Persistência: `Conversation` + `Message` (suporta mídia)
-- [ ] 4.8 Upload de mídia → MinIO → URL assinada
-- [ ] 4.9 Gateway Socket.io: `conversation:new`, `message:new`, `message:status`, `typing`
-- [ ] 4.10 Namespaces/rooms por `workspaceId`
-- [ ] 4.11 Frontend: página `/chat` estilo WhatsApp Web (lista + thread)
-- [ ] 4.12 Frontend: React Query para histórico + socket para live
-- [ ] 4.13 Frontend: anexar áudio/imagem/vídeo, preview, indicadores de status
-- [ ] 4.14 Auto-criação de `Contact` + `Lead` ao chegar nova mensagem de número novo
+- [x] 4.1 Serviço `EvolutionApiClient` (REST) + DTOs
+- [x] 4.2 Módulo `whatsapp`: criar instância, obter QR Code, status da sessão
+- [x] 4.3 Endpoint webhook `/webhooks/evolution` (valida origem por token)
+- [x] 4.4 Processar eventos: mensagem recebida, status atualizado, conexão
+- [ ] 4.5 Fila `messages.ingest` (BullMQ) para processar mensagens de entrada _(adiado — processamento síncrono por enquanto)_
+- [ ] 4.6 Fila `messages.send` (BullMQ) com retry/backoff _(adiado)_
+- [x] 4.7 Persistência: `Conversation` + `Message` (suporta mídia — metadados)
+- [ ] 4.8 Upload de mídia → MinIO → URL assinada _(adiado)_
+- [x] 4.9 Gateway Socket.io: `conversation.upsert`, `message.new`, `message.status`, `whatsapp.status`, `whatsapp.qr`
+- [x] 4.10 Namespaces/rooms por `workspaceId`
+- [x] 4.11 Frontend: página `/chat` estilo WhatsApp Web (lista + thread)
+- [x] 4.12 Frontend: React Query para histórico + socket para live
+- [ ] 4.13 Frontend: anexar áudio/imagem/vídeo, preview, indicadores de status _(parcial — status sim, anexos adiados com 4.8)_
+- [x] 4.14 Auto-criação de `Contact` + `Lead` ao chegar nova mensagem de número novo
 
 ### Fase 5 — Automação ⚡
 - [ ] 5.1 Entidade `AutomationRule` (trigger JSON + actions JSON)

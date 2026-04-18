@@ -11,6 +11,8 @@ import { HealthController } from './modules/health/health.controller';
 import { AuthModule } from './modules/auth/auth.module';
 import { WorkspaceModule } from './modules/workspace/workspace.module';
 import { KanbanModule } from './modules/kanban/kanban.module';
+import { WhatsappModule } from './modules/whatsapp/whatsapp.module';
+import { ChatModule } from './modules/chat/chat.module';
 
 @Module({
   imports: [
@@ -34,6 +36,8 @@ import { KanbanModule } from './modules/kanban/kanban.module';
     AuthModule,
     WorkspaceModule,
     KanbanModule,
+    WhatsappModule,
+    ChatModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

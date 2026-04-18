@@ -7,6 +7,8 @@ import NewWorkspacePage from '../pages/NewWorkspacePage';
 import AppShell from '../pages/AppShell';
 import DashboardPage from '../pages/DashboardPage';
 import KanbanPage from '../pages/KanbanPage';
+import WhatsAppPage from '../pages/WhatsAppPage';
+import ChatPage from '../pages/ChatPage';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((s) => s.user);
@@ -58,6 +60,8 @@ export function AppRoutes() {
       >
         <Route index element={<DashboardPage />} />
         <Route path="kanban" element={<KanbanPage />} />
+        <Route path="whatsapp" element={<WhatsAppPage />} />
+        <Route path="chat" element={<ChatPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/app" replace />} />
     </Routes>

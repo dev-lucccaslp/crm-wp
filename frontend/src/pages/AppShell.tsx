@@ -41,6 +41,8 @@ export default function AppShell() {
             {[
               { to: '/app', label: 'Dashboard', end: true },
               { to: '/app/kanban', label: 'Kanban' },
+              { to: '/app/chat', label: 'Chat' },
+              { to: '/app/whatsapp', label: 'WhatsApp' },
             ].map((item) => (
               <NavLink
                 key={item.to}

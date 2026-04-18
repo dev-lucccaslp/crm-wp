@@ -11,6 +11,13 @@ export const WS_EVENTS = {
   LEAD_UPDATED: 'lead.updated',
   LEAD_DELETED: 'lead.deleted',
   COLUMN_CHANGED: 'column.changed',
+
+  CONVERSATION_UPSERT: 'conversation.upsert',
+  MESSAGE_NEW: 'message.new',
+  MESSAGE_STATUS: 'message.status',
+
+  WHATSAPP_STATUS: 'whatsapp.status',
+  WHATSAPP_QR: 'whatsapp.qr',
 } as const;
 
 @Injectable()
