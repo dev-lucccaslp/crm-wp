@@ -5,8 +5,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
+import { EventEmitter2 } from '@nestjs/event-emitter';
+
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { WsGateway, WS_EVENTS } from '../../infra/websocket/ws.gateway';
+
+const AUTOMATION_EVENT = 'automation.trigger';
 import {
   CreateBoardDto,
   UpdateBoardDto,
@@ -23,6 +27,7 @@ export class KanbanService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly ws: WsGateway,
+    private readonly events: EventEmitter2,
   ) {}
 
   // ============ BOARDS ============
@@ -202,6 +207,13 @@ export class KanbanService {
     });
 
     this.ws.emitToWorkspace(workspaceId, WS_EVENTS.LEAD_CREATED, lead);
+    this.events.emit(AUTOMATION_EVENT, {
+      type: 'lead.created',
+      workspaceId,
+      leadId: lead.id,
+      columnId: lead.columnId,
+      contactId: lead.contactId,
+    });
     return lead;
   }
 
@@ -337,6 +349,15 @@ export class KanbanService {
         toColumnId: dto.toColumnId,
         toPosition: clamped,
         lead: fresh,
+      });
+
+      this.events.emit(AUTOMATION_EVENT, {
+        type: 'lead.moved',
+        workspaceId,
+        leadId,
+        fromColumnId: sameColumn ? null : fromColumnId,
+        toColumnId: dto.toColumnId,
+        contactId: fresh?.contactId ?? null,
       });
 
       return fresh;

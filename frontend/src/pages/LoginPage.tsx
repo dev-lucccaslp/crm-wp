@@ -38,47 +38,57 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-6">
-      <form
-        onSubmit={onSubmit}
-        className="w-full max-w-sm rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
-      >
-        <h1 className="text-2xl font-semibold tracking-tight">Entrar</h1>
-        <p className="mt-1 text-sm text-neutral-500">Acesse seu workspace.</p>
-
-        <div className="mt-6 flex flex-col gap-4">
-          <Field label="E-mail">
-            <Input
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </Field>
-          <Field label="Senha">
-            <Input
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={8}
-            />
-          </Field>
-          {error && <p className="text-xs text-red-500">{error}</p>}
-          <Button type="submit" loading={loading}>
-            Entrar
-          </Button>
+    <div className="flex min-h-screen items-center justify-center bg-neutral-100 p-6 dark:bg-neutral-950">
+      <div className="w-full max-w-sm">
+        {/* Logo mark */}
+        <div className="mb-8 flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-sm font-bold text-white select-none">
+            C
+          </div>
+          <span className="text-sm font-semibold tracking-tight">CRM WP</span>
         </div>
 
-        <p className="mt-6 text-center text-xs text-neutral-500">
-          Ainda não tem conta?{' '}
-          <Link to="/signup" className="font-medium text-neutral-900 hover:underline dark:text-white">
-            Criar workspace
-          </Link>
-        </p>
-      </form>
+        <form
+          onSubmit={onSubmit}
+          className="w-full rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm dark:border-white/[0.06] dark:bg-neutral-900"
+        >
+          <h1 className="text-2xl font-semibold tracking-tight">Entrar</h1>
+          <p className="mt-1 text-sm text-neutral-500">Acesse seu workspace.</p>
+
+          <div className="mt-6 flex flex-col gap-4">
+            <Field label="E-mail">
+              <Input
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </Field>
+            <Field label="Senha">
+              <Input
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={8}
+              />
+            </Field>
+            {error && <p className="text-xs text-red-500">{error}</p>}
+            <Button type="submit" loading={loading}>
+              Entrar
+            </Button>
+          </div>
+
+          <p className="mt-6 text-center text-xs text-neutral-500">
+            Ainda não tem conta?{' '}
+            <Link to="/signup" className="font-medium text-accent hover:underline dark:text-accent-light">
+              Criar workspace
+            </Link>
+          </p>
+        </form>
+      </div>
     </div>
   );
 }

@@ -5,6 +5,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+
+const AUTOMATION_EVENT = 'automation.trigger';
 import {
   MessageDirection,
   MessageMediaType,
@@ -33,6 +36,7 @@ export class WhatsappService {
     private readonly evo: EvolutionApiClient,
     private readonly ws: WsGateway,
     private readonly config: ConfigService,
+    private readonly events: EventEmitter2,
   ) {}
 
   private webhookUrl(secret: string) {
@@ -301,6 +305,20 @@ export class WhatsappService {
           data: { unreadCount: { increment: 1 } },
         });
         await this.autoCreateLead(workspaceId, contact.id, pushName ?? phone);
+
+        const lead = await this.prisma.lead.findFirst({
+          where: { workspaceId, contactId: contact.id },
+          select: { id: true },
+          orderBy: { createdAt: 'desc' },
+        });
+        this.events.emit(AUTOMATION_EVENT, {
+          type: 'message.received',
+          workspaceId,
+          conversationId: conversation.id,
+          contactId: contact.id,
+          leadId: lead?.id ?? null,
+          content: content ?? '',
+        });
       }
 
       this.ws.emitToWorkspace(workspaceId, WS_EVENTS.MESSAGE_NEW, message);

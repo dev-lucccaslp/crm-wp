@@ -7,6 +7,6 @@ import { EvolutionApiClient } from './evolution-api.client';
 @Module({
   controllers: [WhatsappController, EvolutionWebhookController],
   providers: [WhatsappService, EvolutionApiClient],
-  exports: [WhatsappService],
+  exports: [WhatsappService, EvolutionApiClient],
 })
 export class WhatsappModule {}

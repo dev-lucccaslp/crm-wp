@@ -9,6 +9,7 @@ import DashboardPage from '../pages/DashboardPage';
 import KanbanPage from '../pages/KanbanPage';
 import WhatsAppPage from '../pages/WhatsAppPage';
 import ChatPage from '../pages/ChatPage';
+import AutomationPage from '../pages/AutomationPage';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((s) => s.user);
@@ -62,6 +63,7 @@ export function AppRoutes() {
         <Route path="kanban" element={<KanbanPage />} />
         <Route path="whatsapp" element={<WhatsAppPage />} />
         <Route path="chat" element={<ChatPage />} />
+        <Route path="automations" element={<AutomationPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/app" replace />} />
     </Routes>

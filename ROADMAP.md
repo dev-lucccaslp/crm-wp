@@ -188,11 +188,11 @@ Schema completo será escrito na **Fase 2**.
 - [x] 4.14 Auto-criação de `Contact` + `Lead` ao chegar nova mensagem de número novo
 
 ### Fase 5 — Automação ⚡
-- [ ] 5.1 Entidade `AutomationRule` (trigger JSON + actions JSON)
-- [ ] 5.2 Triggers: `lead.created`, `lead.moved`, `message.received`
-- [ ] 5.3 Actions: `send_message`, `move_to_column`, `add_tag`
-- [ ] 5.4 Worker BullMQ consumindo eventos e executando regras
-- [ ] 5.5 UI de editor de regras (simples, sem DSL)
+- [x] 5.1 Entidade `AutomationRule` (trigger JSON + actions JSON) — já no schema; CRUD admin-only
+- [x] 5.2 Triggers: `lead.created`, `lead.moved`, `message.received` (via `@nestjs/event-emitter`)
+- [x] 5.3 Actions: `send_message`, `move_to_column`, `add_tag`
+- [ ] 5.4 Worker BullMQ consumindo eventos e executando regras _(adiado — execução síncrona por EventEmitter2, migra p/ BullMQ junto com 4.5)_
+- [x] 5.5 UI de editor de regras (simples, sem DSL) — página `/app/automations`
 
 ### Fase 6 — Stripe 💳
 - [ ] 6.1 Modelo `Subscription` + planos em código (`PlanId` enum)

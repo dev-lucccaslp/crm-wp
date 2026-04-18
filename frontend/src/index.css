@@ -3,7 +3,11 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
 }
 
 html, body, #root {
@@ -11,6 +15,22 @@ html, body, #root {
 }
 
 body {
-  @apply bg-neutral-50 text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-100;
+  @apply bg-neutral-100 text-neutral-900 antialiased;
+  @apply dark:bg-neutral-950 dark:text-neutral-100;
   font-family: Inter, system-ui, sans-serif;
+}
+
+/* Scrollbar sutil no dark mode */
+.dark ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.dark ::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+.dark ::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-white/10;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  @apply bg-white/20;
 }
