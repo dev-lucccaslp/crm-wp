@@ -2,35 +2,128 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  color-scheme: light;
+@layer base {
+  :root {
+    color-scheme: light;
+    --bg: 0 0% 98%;
+    --bg-subtle: 0 0% 96%;
+    --surface: 0 0% 100%;
+    --surface-hover: 0 0% 97%;
+    --border: 220 13% 91%;
+    --border-strong: 220 13% 85%;
+    --fg: 222 20% 12%;
+    --fg-muted: 220 9% 46%;
+    --fg-subtle: 220 9% 62%;
+    --accent: 239 84% 67%;
+    --accent-hover: 239 72% 58%;
+    --accent-fg: 0 0% 100%;
+    --danger: 0 72% 51%;
+    --success: 160 84% 39%;
+    --warning: 38 92% 50%;
+    --ring: 239 84% 67%;
+    --card: 0 0% 100%;
+    --card-fg: 222 20% 12%;
+    --shadow: 220 20% 10%;
+  }
+
+  .dark {
+    color-scheme: dark;
+    --bg: 222 18% 7%;
+    --bg-subtle: 222 18% 9%;
+    --surface: 222 16% 11%;
+    --surface-hover: 222 16% 14%;
+    --border: 220 12% 18%;
+    --border-strong: 220 12% 24%;
+    --fg: 0 0% 98%;
+    --fg-muted: 220 9% 65%;
+    --fg-subtle: 220 9% 45%;
+    --accent: 239 84% 67%;
+    --accent-hover: 239 84% 73%;
+    --accent-fg: 0 0% 100%;
+    --danger: 0 65% 55%;
+    --success: 160 70% 45%;
+    --warning: 38 92% 55%;
+    --ring: 239 84% 67%;
+    --card: 222 16% 11%;
+    --card-fg: 0 0% 98%;
+    --shadow: 0 0% 0%;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    background-color: hsl(var(--bg));
+    color: hsl(var(--fg));
+    font-family: Inter, system-ui, sans-serif;
+    font-feature-settings: 'cv11', 'ss01';
+    @apply antialiased;
+  }
+
+  ::selection {
+    background: hsl(var(--accent) / 0.25);
+  }
 }
 
-.dark {
-  color-scheme: dark;
+@layer utilities {
+  .bg-bg { background-color: hsl(var(--bg)); }
+  .bg-bg-subtle { background-color: hsl(var(--bg-subtle)); }
+  .bg-surface { background-color: hsl(var(--surface)); }
+  .bg-surface-hover { background-color: hsl(var(--surface-hover)); }
+  .bg-card { background-color: hsl(var(--card)); }
+  .bg-accent { background-color: hsl(var(--accent)); }
+  .bg-accent-hover { background-color: hsl(var(--accent-hover)); }
+  .bg-danger { background-color: hsl(var(--danger)); }
+  .bg-success { background-color: hsl(var(--success)); }
+
+  .text-fg { color: hsl(var(--fg)); }
+  .text-fg-muted { color: hsl(var(--fg-muted)); }
+  .text-fg-subtle { color: hsl(var(--fg-subtle)); }
+  .text-accent { color: hsl(var(--accent)); }
+  .text-accent-fg { color: hsl(var(--accent-fg)); }
+  .text-danger { color: hsl(var(--danger)); }
+  .text-success { color: hsl(var(--success)); }
+
+  .border-default { border-color: hsl(var(--border)); }
+  .border-strong { border-color: hsl(var(--border-strong)); }
+  .ring-accent { --tw-ring-color: hsl(var(--accent)); }
 }
 
-html, body, #root {
-  height: 100%;
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border-strong));
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--fg-subtle));
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
-body {
-  @apply bg-neutral-100 text-neutral-900 antialiased;
-  @apply dark:bg-neutral-950 dark:text-neutral-100;
-  font-family: Inter, system-ui, sans-serif;
-}
+/* Animations */
+@keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
+@keyframes slide-up { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: translateY(0) } }
+@keyframes scale-in { from { opacity: 0; transform: scale(.96) } to { opacity: 1; transform: scale(1) } }
 
-/* Scrollbar sutil no dark mode */
-.dark ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-.dark ::-webkit-scrollbar-track {
-  @apply bg-transparent;
-}
-.dark ::-webkit-scrollbar-thumb {
-  @apply rounded-full bg-white/10;
-}
-.dark ::-webkit-scrollbar-thumb:hover {
-  @apply bg-white/20;
-}
+.animate-fade-in { animation: fade-in .15s ease-out }
+.animate-slide-up { animation: slide-up .2s ease-out }
+.animate-scale-in { animation: scale-in .15s cubic-bezier(.16,1,.3,1) }
+
+/* Radix data-state animations */
+[data-state='open'].radix-anim { animation: scale-in .15s ease-out }

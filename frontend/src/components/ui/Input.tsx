@@ -6,7 +6,9 @@ export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputE
     <input
       ref={ref}
       className={cn(
-        'h-10 w-full rounded-lg border border-neutral-200 bg-white px-3 text-sm outline-none transition placeholder:text-neutral-400 focus:border-accent focus:ring-2 focus:ring-accent/10 dark:border-white/10 dark:bg-neutral-900 dark:placeholder:text-neutral-500 dark:focus:border-accent dark:focus:ring-accent/15',
+        'h-9 w-full rounded-lg border border-default bg-surface px-3 text-sm text-fg outline-none transition placeholder:text-fg-subtle',
+        'focus:border-[hsl(var(--accent))] focus:ring-2 focus:ring-[hsl(var(--accent)/0.15)]',
+        'disabled:cursor-not-allowed disabled:opacity-50',
         className,
       )}
       {...rest}
@@ -14,3 +16,20 @@ export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputE
   ),
 );
 Input.displayName = 'Input';
+
+export const Textarea = forwardRef<
+  HTMLTextAreaElement,
+  React.TextareaHTMLAttributes<HTMLTextAreaElement>
+>(({ className, ...rest }, ref) => (
+  <textarea
+    ref={ref}
+    className={cn(
+      'w-full rounded-lg border border-default bg-surface px-3 py-2 text-sm text-fg outline-none transition placeholder:text-fg-subtle',
+      'focus:border-[hsl(var(--accent))] focus:ring-2 focus:ring-[hsl(var(--accent)/0.15)]',
+      'disabled:cursor-not-allowed disabled:opacity-50',
+      className,
+    )}
+    {...rest}
+  />
+));
+Textarea.displayName = 'Textarea';
