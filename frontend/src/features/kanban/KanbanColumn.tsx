@@ -1,7 +1,9 @@
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
+import { Plus, MoreHorizontal } from 'lucide-react';
 import type { Column } from '../../services/kanban';
-import { LeadCard } from './LeadCard';
+import { SortableLeadCard } from './LeadCard';
+import { cn } from '../../lib/cn';
 
 export function KanbanColumn({
   column,
@@ -18,43 +20,66 @@ export function KanbanColumn({
   });
 
   return (
-    <div className="flex w-72 shrink-0 flex-col rounded-xl bg-neutral-100/60 p-2 dark:bg-neutral-900/60">
-      <div className="mb-2 flex items-center justify-between px-2 pt-1">
-        <div className="flex items-center gap-2">
+    <div className="flex w-[288px] shrink-0 flex-col rounded-xl bg-bg-subtle">
+      <div className="flex items-center justify-between gap-2 px-3 py-3">
+        <div className="flex min-w-0 items-center gap-2">
           <span
-            className="h-2 w-2 rounded-full"
+            className="h-2.5 w-2.5 shrink-0 rounded-full"
             style={{ background: column.color }}
           />
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-300">
+          <h3 className="truncate text-sm font-semibold tracking-tight text-fg">
             {column.name}
           </h3>
-          <span className="text-[11px] text-neutral-500">{column.leads.length}</span>
+          <span className="rounded-md bg-surface-hover px-1.5 py-0.5 text-[10px] font-medium text-fg-muted tabular-nums">
+            {column.leads.length}
+          </span>
         </div>
-        <button
-          onClick={() => onAddLead(column.id)}
-          className="text-xs text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
-          title="Adicionar lead"
-        >
-          +
-        </button>
+        <div className="flex items-center">
+          <button
+            onClick={() => onAddLead(column.id)}
+            className="flex h-6 w-6 items-center justify-center rounded-md text-fg-muted transition hover:bg-surface-hover hover:text-fg"
+            title="Adicionar lead"
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </button>
+          <button
+            className="flex h-6 w-6 items-center justify-center rounded-md text-fg-muted transition hover:bg-surface-hover hover:text-fg"
+            title="Opções"
+          >
+            <MoreHorizontal className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
 
       <div
         ref={setNodeRef}
-        className={
-          'flex min-h-[120px] flex-col gap-2 rounded-lg p-1 transition ' +
-          (isOver ? 'bg-neutral-200/50 dark:bg-neutral-800/50' : '')
-        }
+        className={cn(
+          'mx-2 mb-2 flex min-h-[80px] flex-col gap-2 rounded-lg p-1 transition-colors',
+          isOver && 'bg-[hsl(var(--accent)/0.08)] ring-2 ring-inset ring-[hsl(var(--accent)/0.3)]',
+        )}
       >
         <SortableContext
           items={column.leads.map((l) => l.id)}
           strategy={verticalListSortingStrategy}
         >
           {column.leads.map((lead) => (
-            <LeadCard key={lead.id} lead={lead} onOpen={onOpenLead} />
+            <SortableLeadCard key={lead.id} lead={lead} onOpen={onOpenLead} />
           ))}
         </SortableContext>
+        {column.leads.length === 0 && !isOver && (
+          <div className="flex h-20 items-center justify-center rounded-md border border-dashed border-default text-[11px] text-fg-subtle">
+            Arraste leads aqui
+          </div>
+        )}
       </div>
+
+      <button
+        onClick={() => onAddLead(column.id)}
+        className="mx-2 mb-2 flex items-center justify-center gap-1.5 rounded-md py-2 text-xs font-medium text-fg-muted transition hover:bg-surface-hover hover:text-fg"
+      >
+        <Plus className="h-3.5 w-3.5" />
+        Adicionar card
+      </button>
     </div>
   );
 }

@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
+import { ArrowRight, X, Clock } from 'lucide-react';
 import { kanbanService } from '../../services/kanban';
-import { Button } from '../../components/ui/Button';
+import { Skeleton } from '../../components/ui/Skeleton';
+import { Badge } from '../../components/ui/Badge';
 
 export function LeadDrawer({
   leadId,
@@ -21,68 +23,129 @@ export function LeadDrawer({
   return (
     <>
       <div
-        className="fixed inset-0 z-40 bg-black/30"
+        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm animate-fade-in"
         onClick={onClose}
       />
-      <aside className="fixed inset-y-0 right-0 z-50 w-full max-w-md overflow-y-auto border-l border-neutral-200 bg-white shadow-xl dark:border-neutral-800 dark:bg-neutral-950">
-        <div className="flex items-center justify-between border-b border-neutral-200 px-5 py-3 dark:border-neutral-800">
-          <h2 className="text-sm font-semibold">Detalhes do lead</h2>
-          <Button variant="ghost" onClick={onClose}>
-            Fechar
-          </Button>
+      <aside className="fixed inset-y-0 right-0 z-50 w-full max-w-md overflow-y-auto border-l border-default bg-surface shadow-elevated animate-slide-up">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-default bg-surface/95 backdrop-blur px-5 py-3">
+          <h2 className="text-sm font-semibold text-fg">Detalhes do lead</h2>
+          <button
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-md text-fg-muted transition hover:bg-surface-hover hover:text-fg"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
 
         <div className="p-5">
           {isLoading || !data ? (
-            <p className="text-sm text-neutral-500">Carregando...</p>
+            <div className="space-y-3">
+              <Skeleton className="h-6 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-20" />
+            </div>
           ) : (
             <>
-              <h3 className="text-lg font-semibold tracking-tight">{data.title}</h3>
-              {data.contact && (
-                <p className="mt-1 text-sm text-neutral-500">
-                  Contato: {data.contact.name ?? data.contact.phone}
-                </p>
-              )}
-              {data.value && (
-                <p className="mt-1 text-sm">
-                  Valor:{' '}
-                  <span className="font-medium">
-                    R$ {Number(data.value).toLocaleString('pt-BR')}
-                  </span>
-                </p>
-              )}
-              {data.notes && (
-                <div className="mt-4 rounded-lg bg-neutral-50 p-3 text-sm dark:bg-neutral-900">
-                  {data.notes}
+              <h3 className="text-lg font-semibold tracking-tight text-fg">
+                {data.title}
+              </h3>
+
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                {data.contact && (
+                  <Field label="Contato">
+                    {data.contact.name ?? data.contact.phone}
+                  </Field>
+                )}
+                {data.value != null && (
+                  <Field label="Valor">
+                    <span className="font-medium text-success tabular-nums">
+                      R$ {Number(data.value).toLocaleString('pt-BR')}
+                    </span>
+                  </Field>
+                )}
+                {data.assignee && (
+                  <Field label="Responsável">{data.assignee.name}</Field>
+                )}
+              </div>
+
+              {data.tags.length > 0 && (
+                <div className="mt-4">
+                  <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-fg-subtle">
+                    Tags
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {data.tags.map((t) => (
+                      <Badge key={t} variant="accent">
+                        {t}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               )}
 
-              <h4 className="mt-6 text-xs font-semibold uppercase tracking-wider text-neutral-500">
-                Histórico
-              </h4>
-              <ul className="mt-2 space-y-2">
-                {data.movements.length === 0 && (
-                  <li className="text-sm text-neutral-500">Nenhum movimento ainda</li>
-                )}
-                {data.movements.map((m) => (
-                  <li
-                    key={m.id}
-                    className="rounded-md border border-neutral-200 px-3 py-2 text-xs dark:border-neutral-800"
-                  >
-                    <span className="font-medium">
-                      {m.fromColumn?.name ?? '—'} → {m.toColumn.name}
-                    </span>
-                    <span className="ml-2 text-neutral-500">
-                      por {m.movedBy?.name ?? 'sistema'} ·{' '}
-                      {new Date(m.createdAt).toLocaleString('pt-BR')}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+              {data.notes && (
+                <div className="mt-4">
+                  <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-fg-subtle">
+                    Notas
+                  </p>
+                  <div className="rounded-lg border border-default bg-bg-subtle p-3 text-sm leading-relaxed text-fg">
+                    {data.notes}
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-6">
+                <div className="mb-2 flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-fg-subtle">
+                  <Clock className="h-3 w-3" />
+                  Histórico
+                </div>
+                <ul className="space-y-2">
+                  {data.movements.length === 0 && (
+                    <li className="text-sm text-fg-muted">
+                      Nenhum movimento ainda
+                    </li>
+                  )}
+                  {data.movements.map((m) => (
+                    <li
+                      key={m.id}
+                      className="rounded-lg border border-default bg-bg-subtle p-3 text-xs"
+                    >
+                      <div className="flex items-center gap-1.5 text-fg">
+                        <span className="font-medium">
+                          {m.fromColumn?.name ?? 'Início'}
+                        </span>
+                        <ArrowRight className="h-3 w-3 text-fg-subtle" />
+                        <span className="font-medium">{m.toColumn.name}</span>
+                      </div>
+                      <div className="mt-1 text-fg-subtle">
+                        por {m.movedBy?.name ?? 'sistema'} ·{' '}
+                        {new Date(m.createdAt).toLocaleString('pt-BR')}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </>
           )}
         </div>
       </aside>
     </>
+  );
+}
+
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <p className="mb-0.5 text-[11px] font-medium uppercase tracking-wide text-fg-subtle">
+        {label}
+      </p>
+      <p className="text-sm text-fg">{children}</p>
+    </div>
   );
 }

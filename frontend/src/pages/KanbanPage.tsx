@@ -2,22 +2,42 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   DndContext,
   DragOverlay,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
+  KeyboardSensor,
   closestCorners,
   useSensor,
   useSensors,
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core';
+import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { kanbanService, type BoardFull, type Lead } from '../services/kanban';
 import { KanbanColumn } from '../features/kanban/KanbanColumn';
-import { LeadCard } from '../features/kanban/LeadCard';
+import { LeadCard, SortableLeadCard } from '../features/kanban/LeadCard';
 import { LeadDrawer } from '../features/kanban/LeadDrawer';
 import { useBoardSync } from '../features/kanban/useBoardSync';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { Skeleton } from '../components/ui/Skeleton';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '../components/ui/Dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../components/ui/DropdownMenu';
+import { Check, ChevronDown } from 'lucide-react';
+
+void SortableLeadCard;
 
 export default function KanbanPage() {
   const qc = useQueryClient();
@@ -46,7 +66,11 @@ export default function KanbanPage() {
   const [addingInColumn, setAddingInColumn] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState('');
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   const allLeads = useMemo(() => {
     const map = new Map<string, Lead>();
@@ -68,7 +92,10 @@ export default function KanbanPage() {
       await qc.cancelQueries({ queryKey: ['board', boardId] });
       const prev = qc.getQueryData<BoardFull>(['board', boardId]);
       if (!prev) return { prev };
-      qc.setQueryData<BoardFull>(['board', boardId], applyMove(prev, leadId, toColumnId, toPosition));
+      qc.setQueryData<BoardFull>(
+        ['board', boardId],
+        applyMove(prev, leadId, toColumnId, toPosition),
+      );
       return { prev };
     },
     onError: (_err, _vars, ctx) => {
@@ -93,8 +120,8 @@ export default function KanbanPage() {
     const { active, over } = e;
     if (!over || !board) return;
     const leadId = String(active.id);
-    const activeLead = allLeads.get(leadId);
-    if (!activeLead) return;
+    const activeLeadLocal = allLeads.get(leadId);
+    if (!activeLeadLocal) return;
 
     const overData = over.data.current as
       | { type: 'column'; columnId: string }
@@ -116,7 +143,11 @@ export default function KanbanPage() {
       toPosition = idx < 0 ? col.leads.length : idx;
     }
 
-    if (toColumnId === activeLead.columnId && toPosition === activeLead.position) return;
+    if (
+      toColumnId === activeLeadLocal.columnId &&
+      toPosition === activeLeadLocal.position
+    )
+      return;
 
     moveMutation.mutate({ leadId, toColumnId, toPosition });
   }
@@ -133,40 +164,73 @@ export default function KanbanPage() {
     setAddingInColumn(null);
   }
 
+  const totalLeads =
+    board?.columns.reduce((acc, c) => acc + c.leads.length, 0) ?? 0;
+  const totalValue =
+    board?.columns.reduce(
+      (acc, c) =>
+        acc + c.leads.reduce((a, l) => a + (Number(l.value) || 0), 0),
+      0,
+    ) ?? 0;
+
   return (
-    <div className="flex h-[calc(100vh-56px-3rem)] flex-col">
-      <div className="mb-3 flex items-center justify-between">
+    <div className="flex h-full w-full flex-col overflow-hidden">
+      <header className="flex shrink-0 items-center justify-between gap-4 border-b border-default bg-surface px-6 py-3">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Pipeline</h1>
+          <h1 className="text-base font-semibold tracking-tight">Pipeline</h1>
           {board && (
-            <p className="text-xs text-neutral-500">{board.name}</p>
+            <p className="text-xs text-fg-muted">
+              {board.name} · {totalLeads} leads ·{' '}
+              <span className="tabular-nums">
+                R$ {totalValue.toLocaleString('pt-BR')}
+              </span>
+            </p>
           )}
         </div>
-        {boards && boards.length > 1 && (
-          <select
-            value={boardId ?? ''}
-            onChange={(e) => setBoardId(e.target.value)}
-            className="h-8 rounded-md border border-neutral-300 bg-white px-2 text-xs dark:border-neutral-700 dark:bg-neutral-900"
-          >
-            {boards.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
-            ))}
-          </select>
+        {boards && boards.length > 1 && board && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                {board.name}
+                <ChevronDown className="h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {boards.map((b) => (
+                <DropdownMenuItem
+                  key={b.id}
+                  onSelect={() => setBoardId(b.id)}
+                  className="justify-between"
+                >
+                  {b.name}
+                  {b.id === boardId && <Check className="h-3.5 w-3.5 text-accent" />}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
-      </div>
+      </header>
 
       {isLoading || !board ? (
-        <p className="text-sm text-neutral-500">Carregando pipeline...</p>
+        <div className="flex flex-1 gap-3 overflow-hidden p-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="w-[288px] shrink-0 space-y-3 rounded-xl bg-bg-subtle p-3">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-20" />
+              <Skeleton className="h-20" />
+              <Skeleton className="h-20" />
+            </div>
+          ))}
+        </div>
       ) : (
         <DndContext
           sensors={sensors}
           collisionDetection={closestCorners}
           onDragStart={onDragStart}
           onDragEnd={onDragEnd}
+          onDragCancel={() => setActiveLead(null)}
         >
-          <div className="flex flex-1 gap-3 overflow-x-auto pb-4">
+          <div className="flex flex-1 gap-3 overflow-x-auto overflow-y-hidden p-4">
             {board.columns.map((col) => (
               <KanbanColumn
                 key={col.id}
@@ -176,41 +240,46 @@ export default function KanbanPage() {
               />
             ))}
           </div>
-          <DragOverlay>
-            {activeLead ? <LeadCard lead={activeLead} onOpen={() => {}} /> : null}
+          <DragOverlay dropAnimation={{ duration: 180, easing: 'cubic-bezier(.16,1,.3,1)' }}>
+            {activeLead ? (
+              <div className="w-[272px]">
+                <LeadCard lead={activeLead} onOpen={() => {}} overlay />
+              </div>
+            ) : null}
           </DragOverlay>
         </DndContext>
       )}
 
-      {addingInColumn && (
-        <>
-          <div
-            className="fixed inset-0 z-40 bg-black/30"
-            onClick={() => setAddingInColumn(null)}
-          />
-          <form
-            onSubmit={submitAdd}
-            className="fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-xl border border-neutral-200 bg-white p-5 shadow-xl dark:border-neutral-800 dark:bg-neutral-900"
-          >
-            <h3 className="text-sm font-semibold">Novo lead</h3>
+      <Dialog
+        open={!!addingInColumn}
+        onOpenChange={(open) => !open && setAddingInColumn(null)}
+      >
+        <DialogContent className="max-w-sm">
+          <form onSubmit={submitAdd}>
+            <DialogHeader>
+              <DialogTitle>Novo lead</DialogTitle>
+            </DialogHeader>
             <Input
               autoFocus
-              className="mt-3"
-              placeholder="Título"
+              placeholder="Título do lead"
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
             />
-            <div className="mt-4 flex justify-end gap-2">
-              <Button variant="outline" type="button" onClick={() => setAddingInColumn(null)}>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => setAddingInColumn(null)}
+              >
                 Cancelar
               </Button>
               <Button type="submit" loading={createMutation.isPending}>
                 Criar
               </Button>
-            </div>
+            </DialogFooter>
           </form>
-        </>
-      )}
+        </DialogContent>
+      </Dialog>
 
       <LeadDrawer leadId={openLeadId} onClose={() => setOpenLeadId(null)} />
     </div>
