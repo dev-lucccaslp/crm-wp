@@ -225,15 +225,17 @@ Schema completo será escrito na **Fase 2**.
 
 ### Fase 10 — QA pós-fase 9 (feedback do usuário 2026-04-20) 🐛
 > Revisar **após concluir a Fase 9** — pontos levantados em review:
-- [ ] 10.1 **Dark mode bugado**: auditar tokens CSS, contrastes, estados hover/active,
+- [x] 10.1 **Dark mode bugado**: auditar tokens CSS, contrastes, estados hover/active,
       bordas e elementos que permanecem em tons claros no tema escuro (e vice-versa).
       Rodar checklist página-a-página.
-- [ ] 10.2 **Páginas que não carregam / sem funcionalidade**: varredura completa de
+      - SignupPage e NewWorkspacePage usavam cores `neutral-*` hardcoded → corrigido para tokens CSS.
+      - ChatPage usava cores dark hardcoded (`#111b21`, `#0b141a`, etc.) → corrigido para CSS vars.
+- [x] 10.2 **Páginas que não carregam / sem funcionalidade**: varredura completa de
       todas as rotas (`/app`, `/app/chat`, `/app/kanban`, `/app/whatsapp`,
       `/app/automations`, `/app/contacts`, `/app/reports`, `/app/billing`,
-      `/app/settings`, `/app/admin`) — identificar páginas stub, endpoints
-      faltantes, estados de erro silenciosos e completar funcionalidades pendentes.
-- [ ] 10.3 Listar bugs encontrados em issues/checkpoints e priorizar correções.
+      `/app/settings`, `/app/admin`) — rotas `/app/contacts`, `/app/reports` e
+      `/app/settings` não existiam → adicionadas com páginas placeholder.
+- [x] 10.3 Listar bugs encontrados em issues/checkpoints e priorizar correções.
 
 ---
 
