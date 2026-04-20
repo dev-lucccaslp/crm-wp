@@ -17,6 +17,9 @@ import {
   PanelLeftOpen,
   Check,
   ChevronsUpDown,
+  Menu,
+  X,
+  Search as SearchIcon,
 } from 'lucide-react';
 import { cn } from '../lib/cn';
 import { useAuthStore } from '../store/auth-store';
@@ -32,6 +35,10 @@ import {
   DropdownMenuTrigger,
 } from '../components/ui/DropdownMenu';
 import { QuickTooltip } from '../components/ui/Tooltip';
+import { CommandPalette } from '../components/CommandPalette';
+import { PageTransition } from '../components/PageTransition';
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
 type NavItem = {
   to: string;
@@ -61,7 +68,18 @@ const ADMIN_ITEM: NavItem = {
 export default function AppShell() {
   const navigate = useNavigate();
   const { theme, toggle } = useTheme();
-  const { sidebarCollapsed, toggleSidebar } = useUiStore();
+  const {
+    sidebarCollapsed,
+    toggleSidebar,
+    mobileSidebarOpen,
+    setMobileSidebar,
+    toggleMobileSidebar,
+  } = useUiStore();
+  const location = useLocation();
+  // Fecha o drawer mobile ao navegar
+  useEffect(() => {
+    setMobileSidebar(false);
+  }, [location.pathname, setMobileSidebar]);
   const {
     user,
     workspaces,
@@ -93,10 +111,53 @@ export default function AppShell() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-bg text-fg">
+      <CommandPalette />
+
+      {/* Top bar mobile */}
+      <div className="fixed inset-x-0 top-0 z-30 flex h-12 items-center gap-2 border-b border-default bg-surface px-3 md:hidden">
+        <button
+          onClick={toggleMobileSidebar}
+          className="flex h-9 w-9 items-center justify-center rounded-md text-fg-muted hover:bg-surface-hover"
+          aria-label="Abrir menu"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <div className="flex items-center gap-2">
+          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-accent text-xs font-bold text-accent-fg">
+            C
+          </div>
+          <span className="text-sm font-semibold">CRM-WP</span>
+        </div>
+        <div className="flex-1" />
+        <button
+          onClick={() => {
+            const ev = new KeyboardEvent('keydown', { key: 'k', metaKey: true });
+            window.dispatchEvent(ev);
+          }}
+          className="flex h-9 w-9 items-center justify-center rounded-md text-fg-muted hover:bg-surface-hover"
+          aria-label="Buscar (⌘K)"
+        >
+          <SearchIcon className="h-4 w-4" />
+        </button>
+      </div>
+
+      {/* Backdrop mobile */}
+      {mobileSidebarOpen && (
+        <button
+          onClick={() => setMobileSidebar(false)}
+          className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm md:hidden"
+          aria-label="Fechar menu"
+        />
+      )}
+
       <aside
         className={cn(
-          'flex shrink-0 flex-col border-r border-default bg-surface transition-[width] duration-200 ease-out',
-          collapsed ? 'w-[60px]' : 'w-[240px]',
+          'flex shrink-0 flex-col border-r border-default bg-surface transition-[width,transform] duration-200 ease-out',
+          // desktop: largura dinâmica
+          collapsed ? 'md:w-[60px]' : 'md:w-[240px]',
+          // mobile: drawer fixo
+          'fixed inset-y-0 left-0 z-40 w-[260px] md:static md:translate-x-0',
+          mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
         )}
       >
         {/* Brand + collapse */}
@@ -115,14 +176,23 @@ export default function AppShell() {
             )}
           </div>
           {!collapsed && (
-            <QuickTooltip content="Recolher sidebar" side="right">
+            <div className="flex items-center gap-1">
+              <QuickTooltip content="Recolher sidebar" side="right">
+                <button
+                  onClick={toggleSidebar}
+                  className="hidden h-8 w-8 items-center justify-center rounded-md text-fg-muted transition hover:bg-surface-hover hover:text-fg md:flex"
+                >
+                  <PanelLeftClose className="h-4 w-4" />
+                </button>
+              </QuickTooltip>
               <button
-                onClick={toggleSidebar}
-                className="flex h-8 w-8 items-center justify-center rounded-md text-fg-muted transition hover:bg-surface-hover hover:text-fg"
+                onClick={() => setMobileSidebar(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-md text-fg-muted transition hover:bg-surface-hover hover:text-fg md:hidden"
+                aria-label="Fechar"
               >
-                <PanelLeftClose className="h-4 w-4" />
+                <X className="h-4 w-4" />
               </button>
-            </QuickTooltip>
+            </div>
           )}
         </div>
 
@@ -310,8 +380,10 @@ export default function AppShell() {
       </aside>
 
       {/* Main */}
-      <main className="flex flex-1 overflow-hidden bg-bg">
-        <Outlet />
+      <main className="flex flex-1 overflow-hidden bg-bg pt-12 md:pt-0">
+        <PageTransition>
+          <Outlet />
+        </PageTransition>
       </main>
     </div>
   );
