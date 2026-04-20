@@ -12,6 +12,7 @@ import {
   Settings,
   Zap,
   CreditCard,
+  ShieldCheck,
   PanelLeftClose,
   PanelLeftOpen,
   Check,
@@ -50,6 +51,12 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/app/billing', label: 'Plano', icon: CreditCard },
   { to: '/app/settings', label: 'Configurações', icon: Settings },
 ];
+
+const ADMIN_ITEM: NavItem = {
+  to: '/app/admin',
+  label: 'Super Admin',
+  icon: ShieldCheck,
+};
 
 export default function AppShell() {
   const navigate = useNavigate();
@@ -179,7 +186,7 @@ export default function AppShell() {
             collapsed ? 'p-2' : 'p-2',
           )}
         >
-          {NAV_ITEMS.map((item) => {
+          {(user.isSuperAdmin ? [...NAV_ITEMS, ADMIN_ITEM] : NAV_ITEMS).map((item) => {
             const content = (
               <NavLink
                 key={item.to}

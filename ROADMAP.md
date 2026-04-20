@@ -202,11 +202,11 @@ Schema completo será escrito na **Fase 2**.
 - [x] 6.5 Cron diário `@Cron(EVERY_DAY_AT_3AM)` — PAST_DUE > 3d → downgrade p/ FREE
 - [x] 6.6 Página `/app/billing` — plano atual, uso vs limites, cards dos planos, portal Stripe
 
-### Fase 7 — Admin 🛠️
-- [ ] 7.1 Role super-admin (fora do `Membership`)
-- [ ] 7.2 Listagem de workspaces + usuários
-- [ ] 7.3 Métricas: leads criados, conversões, tempo médio de resposta
-- [ ] 7.4 Viewer de `AuditLog`
+### Fase 7 — Admin 🛠️ ✅
+- [x] 7.1 Role super-admin (`User.isSuperAdmin`, `SuperAdminGuard` com check via DB)
+- [x] 7.2 Listagem de workspaces + usuários (`GET /admin/workspaces`, `/admin/users`)
+- [x] 7.3 Métricas: totais, leads 30/7d, mensagens in/out, tempo médio resposta, conversão (`GET /admin/metrics`)
+- [x] 7.4 Viewer de `AuditLog` (`GET /admin/audit-logs`) + página `/app/admin` com abas
 
 ### Fase 8 — Hardening 🔐
 - [ ] 8.1 Helmet + CORS restrito

@@ -7,6 +7,7 @@ export interface AuthUser {
   id: string;
   email: string;
   name: string;
+  isSuperAdmin?: boolean;
 }
 
 export interface Workspace {

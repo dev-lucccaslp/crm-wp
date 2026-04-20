@@ -106,6 +106,7 @@ export class AuthService {
         id: true,
         email: true,
         name: true,
+        isSuperAdmin: true,
         memberships: {
           select: {
             role: true,
