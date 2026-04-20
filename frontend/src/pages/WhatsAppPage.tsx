@@ -4,6 +4,9 @@ import { Plus, Trash2, Wifi, QrCode } from 'lucide-react';
 import { whatsappService, type WhatsappInstance } from '../services/whatsapp';
 import { getSocket } from '../services/socket';
 import { cn } from '../lib/cn';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
+import { Skeleton } from '../components/ui/Skeleton';
 
 const WS_EVENTS = {
   WHATSAPP_STATUS: 'whatsapp.status',
@@ -11,17 +14,17 @@ const WS_EVENTS = {
 };
 
 const STATUS_LABEL: Record<string, string> = {
-  CONNECTED: 'CONECTADO',
-  CONNECTING: 'CONECTANDO',
-  QR: 'AGUARDANDO QR',
-  DISCONNECTED: 'DESCONECTADO',
-  FAILED: 'FALHA',
+  CONNECTED: 'Conectado',
+  CONNECTING: 'Conectando',
+  QR: 'Aguardando QR',
+  DISCONNECTED: 'Desconectado',
+  FAILED: 'Falha',
 };
 
 function statusDot(s: string) {
-  if (s === 'CONNECTED') return 'bg-emerald-400';
-  if (s === 'CONNECTING' || s === 'QR') return 'bg-amber-400';
-  return 'bg-neutral-500';
+  if (s === 'CONNECTED') return 'bg-success';
+  if (s === 'CONNECTING' || s === 'QR') return 'bg-warning';
+  return 'bg-fg-subtle';
 }
 
 export default function WhatsAppPage() {
@@ -62,42 +65,42 @@ export default function WhatsAppPage() {
   }, [qc]);
 
   return (
-    <div className="flex h-full w-full overflow-hidden">
-      {/* ── Left: instance list ── */}
-      <div className="flex w-[340px] shrink-0 flex-col border-r border-white/[0.06] bg-[#111b21]">
-        {/* Header + create form */}
-        <div className="border-b border-white/[0.06] px-4 py-3">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/30">
+    <div className="flex h-full w-full overflow-hidden bg-bg">
+      <div className="flex w-[340px] shrink-0 flex-col border-r border-default bg-surface">
+        <div className="border-b border-default px-4 py-3">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-fg-subtle">
             WhatsApp · Instâncias
           </p>
           <form
             onSubmit={(e) => { e.preventDefault(); if (name.trim()) createMut.mutate(name.trim()); }}
             className="flex gap-2"
           >
-            <input
+            <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Nome da instância..."
-              className="flex-1 rounded-lg bg-white/[0.06] px-3 py-2 text-sm text-white placeholder:text-white/25 outline-none focus:ring-1 focus:ring-white/10"
             />
-            <button
+            <Button
               type="submit"
+              size="icon"
               disabled={createMut.isPending || !name.trim()}
-              className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-white transition hover:bg-accent-hover disabled:opacity-40"
               title="Criar instância"
             >
-              <Plus size={16} />
-            </button>
+              <Plus className="h-4 w-4" />
+            </Button>
           </form>
         </div>
 
-        {/* List */}
         <div className="flex-1 overflow-y-auto">
           {isLoading && (
-            <div className="px-4 py-6 text-xs text-white/30">Carregando...</div>
+            <div className="space-y-2 p-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-14 w-full" />
+              ))}
+            </div>
           )}
           {!isLoading && instances.length === 0 && (
-            <div className="px-4 py-8 text-center text-xs text-white/20">
+            <div className="px-4 py-10 text-center text-xs text-fg-subtle">
               Nenhuma instância criada.
             </div>
           )}
@@ -106,25 +109,24 @@ export default function WhatsAppPage() {
               key={inst.id}
               onClick={() => setSelectedId(inst.id)}
               className={cn(
-                'flex w-full items-center gap-3 border-b border-white/[0.04] px-4 py-3 text-left transition',
-                (selected?.id === inst.id) ? 'bg-[#2a3942]' : 'hover:bg-white/[0.04]',
+                'flex w-full items-center gap-3 border-b border-default px-4 py-3 text-left transition',
+                selected?.id === inst.id ? 'bg-surface-hover' : 'hover:bg-surface-hover',
               )}
             >
-              <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-sm font-bold text-white/60">
+              <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--accent)/0.15)] text-sm font-bold text-accent">
                 {inst.name.slice(0, 2).toUpperCase()}
-                <span className={cn('absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#111b21]', statusDot(inst.status))} />
+                <span className={cn('absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-surface', statusDot(inst.status))} />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-medium text-white/90">{inst.name}</div>
-                <div className="text-xs text-white/35">{STATUS_LABEL[inst.status] ?? inst.status}</div>
+                <div className="truncate text-sm font-medium text-fg">{inst.name}</div>
+                <div className="text-xs text-fg-muted">{STATUS_LABEL[inst.status] ?? inst.status}</div>
               </div>
             </button>
           ))}
         </div>
       </div>
 
-      {/* ── Right: detail / QR panel ── */}
-      <div className="flex flex-1 flex-col bg-[#0b141a]">
+      <div className="flex flex-1 flex-col bg-bg">
         {selected ? (
           <InstancePanel
             instance={selected}
@@ -133,8 +135,10 @@ export default function WhatsAppPage() {
         ) : (
           <div className="flex flex-1 items-center justify-center">
             <div className="text-center">
-              <div className="mb-3 text-5xl opacity-10">📱</div>
-              <p className="text-sm text-white/25">Selecione ou crie uma instância</p>
+              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-surface-hover">
+                <QrCode className="h-6 w-6 text-fg-subtle" />
+              </div>
+              <p className="text-sm text-fg-muted">Selecione ou crie uma instância</p>
             </div>
           </div>
         )}
@@ -192,51 +196,51 @@ function InstancePanel({
 
   return (
     <>
-      {/* Header */}
-      <header className="flex items-center justify-between border-b border-white/[0.06] bg-[#202c33] px-5 py-3">
+      <header className="flex items-center justify-between border-b border-default bg-surface px-5 py-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-sm font-bold text-white/60">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[hsl(var(--accent)/0.15)] text-sm font-bold text-accent">
             {instance.name.slice(0, 2).toUpperCase()}
           </div>
           <div>
-            <div className="text-sm font-semibold text-white">{instance.name}</div>
+            <div className="text-sm font-semibold text-fg">{instance.name}</div>
             {instance.phoneNumber && (
-              <div className="text-xs text-white/40">{instance.phoneNumber}</div>
+              <div className="text-xs text-fg-muted">{instance.phoneNumber}</div>
             )}
           </div>
         </div>
-        <button
+        <Button
+          variant="ghost"
+          size="icon-sm"
           onClick={() => { if (confirm(`Remover "${instance.name}"?`)) onRemove(instance.id); }}
-          className="rounded-lg p-2 text-white/30 transition hover:bg-white/10 hover:text-red-400"
           title="Remover instância"
         >
-          <Trash2 size={15} />
-        </button>
+          <Trash2 className="h-4 w-4" />
+        </Button>
       </header>
 
-      {/* Content */}
       <div className="flex flex-1 flex-col items-center justify-center gap-6 p-8">
         {isConnected ? (
           <div className="flex flex-col items-center gap-4 text-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/10">
-              <Wifi size={36} className="text-emerald-400" />
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[hsl(var(--success)/0.12)]">
+              <Wifi className="h-8 w-8 text-success" />
             </div>
             <div>
-              <p className="text-lg font-semibold text-white">Conectado</p>
-              <p className="mt-0.5 text-sm text-white/40">
+              <p className="text-lg font-semibold text-fg">Conectado</p>
+              <p className="mt-0.5 text-sm text-fg-muted">
                 {instance.phoneNumber ?? 'Número vinculado'}
               </p>
             </div>
-            <button
+            <Button
+              variant="danger"
+              size="sm"
               onClick={() => { if (confirm(`Desconectar "${instance.name}"?`)) onRemove(instance.id); }}
-              className="rounded-lg border border-red-500/30 px-4 py-1.5 text-sm text-red-400 transition hover:bg-red-500/10"
             >
               Desconectar
-            </button>
+            </Button>
           </div>
         ) : qr ? (
           <div className="flex flex-col items-center gap-4 text-center">
-            <div className="rounded-2xl bg-white p-4 shadow-lg">
+            <div className="rounded-2xl bg-white p-4 shadow-elevated">
               <img
                 src={qr.startsWith('data:') ? qr : `data:image/png;base64,${qr}`}
                 alt="QR Code"
@@ -244,18 +248,18 @@ function InstancePanel({
               />
             </div>
             <div>
-              <p className="text-sm font-medium text-white/80">Escaneie com o WhatsApp</p>
-              <p className="mt-1 text-xs text-white/30">
+              <p className="text-sm font-medium text-fg">Escaneie com o WhatsApp</p>
+              <p className="mt-1 text-xs text-fg-muted">
                 Aparelhos conectados → Conectar aparelho
               </p>
             </div>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-4 text-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/5">
-              <QrCode size={36} className="text-white/20" />
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-surface-hover animate-pulse">
+              <QrCode className="h-8 w-8 text-fg-subtle" />
             </div>
-            <p className="text-sm text-white/30">Gerando QR Code...</p>
+            <p className="text-sm text-fg-muted">Gerando QR Code...</p>
           </div>
         )}
       </div>

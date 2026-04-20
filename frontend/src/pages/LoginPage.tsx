@@ -38,22 +38,21 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-100 p-6 dark:bg-neutral-950">
+    <div className="flex min-h-screen items-center justify-center bg-bg p-6 text-fg">
       <div className="w-full max-w-sm">
-        {/* Logo mark */}
         <div className="mb-8 flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-sm font-bold text-white select-none">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-sm font-bold text-accent-fg shadow-sm">
             C
           </div>
-          <span className="text-sm font-semibold tracking-tight">CRM WP</span>
+          <span className="text-sm font-semibold tracking-tight">CRM-WP</span>
         </div>
 
         <form
           onSubmit={onSubmit}
-          className="w-full rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm dark:border-white/[0.06] dark:bg-neutral-900"
+          className="w-full rounded-2xl border border-default bg-surface p-8 shadow-card"
         >
-          <h1 className="text-2xl font-semibold tracking-tight">Entrar</h1>
-          <p className="mt-1 text-sm text-neutral-500">Acesse seu workspace.</p>
+          <h1 className="text-xl font-semibold tracking-tight text-fg">Entrar</h1>
+          <p className="mt-1 text-sm text-fg-muted">Acesse seu workspace.</p>
 
           <div className="mt-6 flex flex-col gap-4">
             <Field label="E-mail">
@@ -75,15 +74,15 @@ export default function LoginPage() {
                 minLength={8}
               />
             </Field>
-            {error && <p className="text-xs text-red-500">{error}</p>}
+            {error && <p className="text-xs text-danger">{error}</p>}
             <Button type="submit" loading={loading}>
               Entrar
             </Button>
           </div>
 
-          <p className="mt-6 text-center text-xs text-neutral-500">
+          <p className="mt-6 text-center text-xs text-fg-muted">
             Ainda não tem conta?{' '}
-            <Link to="/signup" className="font-medium text-accent hover:underline dark:text-accent-light">
+            <Link to="/signup" className="font-medium text-accent hover:underline">
               Criar workspace
             </Link>
           </p>

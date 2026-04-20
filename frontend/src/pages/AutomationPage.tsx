@@ -9,7 +9,18 @@ import {
   type AutomationTrigger,
   type TriggerType,
 } from '../services/automation';
-import { cn } from '../lib/cn';
+import { Button } from '../components/ui/Button';
+import { Input, Textarea } from '../components/ui/Input';
+import { Switch } from '../components/ui/Switch';
+import { Skeleton } from '../components/ui/Skeleton';
+import { Badge } from '../components/ui/Badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '../components/ui/Dialog';
 
 const TRIGGER_LABEL: Record<TriggerType, string> = {
   'lead.created': 'Lead criado',
@@ -44,89 +55,100 @@ export default function AutomationPage() {
   });
 
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden bg-[#0b141a] p-6">
-      <div className="mb-4 flex items-center justify-between">
+    <div className="flex h-full w-full flex-col overflow-hidden bg-bg">
+      <header className="flex shrink-0 items-center justify-between border-b border-default bg-surface px-6 py-3">
         <div>
-          <h1 className="text-lg font-semibold text-white">Automações</h1>
-          <p className="text-xs text-white/40">
+          <h1 className="text-base font-semibold tracking-tight text-fg">Automações</h1>
+          <p className="text-xs text-fg-muted">
             Regras de gatilho → ação executadas automaticamente.
           </p>
         </div>
-        <button
-          onClick={() => setEditing('new')}
-          className="flex items-center gap-2 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-white transition hover:bg-accent-hover"
-        >
-          <Plus size={15} />
+        <Button onClick={() => setEditing('new')} size="sm" className="gap-2">
+          <Plus className="h-3.5 w-3.5" />
           Nova regra
-        </button>
+        </Button>
+      </header>
+
+      <div className="flex-1 overflow-y-auto p-6">
+        {isLoading ? (
+          <div className="space-y-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-16 w-full" />
+            ))}
+          </div>
+        ) : rules.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-default bg-surface p-12 text-center">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[hsl(var(--accent)/0.12)]">
+              <Zap className="h-5 w-5 text-accent" />
+            </div>
+            <p className="text-sm font-medium text-fg">Nenhuma regra configurada</p>
+            <p className="mt-1 text-xs text-fg-muted">
+              Crie uma regra para automatizar respostas e movimentações.
+            </p>
+            <Button onClick={() => setEditing('new')} size="sm" className="mt-4 gap-2">
+              <Plus className="h-3.5 w-3.5" />
+              Nova regra
+            </Button>
+          </div>
+        ) : (
+          <ul className="space-y-2">
+            {rules.map((r) => (
+              <li
+                key={r.id}
+                className="flex items-center gap-4 rounded-xl border border-default bg-surface p-4 shadow-card transition hover:border-strong"
+              >
+                <Switch
+                  checked={r.enabled}
+                  onCheckedChange={(v) => toggleMut.mutate({ id: r.id, enabled: v })}
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium text-fg">{r.name}</div>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-fg-muted">
+                    <Badge variant="accent">{TRIGGER_LABEL[r.trigger.type]}</Badge>
+                    <span>→</span>
+                    {r.actions.length > 0 ? (
+                      r.actions.map((a, i) => (
+                        <Badge key={i} variant="outline">
+                          {ACTION_LABEL[a.type]}
+                        </Badge>
+                      ))
+                    ) : (
+                      <span>—</span>
+                    )}
+                  </div>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => setEditing(r)}>
+                  Editar
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => confirm(`Remover "${r.name}"?`) && removeMut.mutate(r.id)}
+                  title="Remover"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
-      {isLoading ? (
-        <div className="text-sm text-white/40">Carregando...</div>
-      ) : rules.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-white/10 p-10 text-center">
-          <Zap size={28} className="mx-auto mb-2 text-white/20" />
-          <p className="text-sm text-white/50">Nenhuma regra configurada.</p>
-        </div>
-      ) : (
-        <ul className="space-y-2 overflow-y-auto">
-          {rules.map((r) => (
-            <li
-              key={r.id}
-              className="flex items-center gap-4 rounded-lg border border-white/5 bg-[#111b21] p-4"
-            >
-              <button
-                onClick={() => toggleMut.mutate({ id: r.id, enabled: !r.enabled })}
-                className={cn(
-                  'h-6 w-11 shrink-0 rounded-full p-0.5 transition',
-                  r.enabled ? 'bg-emerald-500' : 'bg-white/10',
-                )}
-                title={r.enabled ? 'Ativa' : 'Desativada'}
-              >
-                <span
-                  className={cn(
-                    'block h-5 w-5 rounded-full bg-white transition-transform',
-                    r.enabled && 'translate-x-5',
-                  )}
-                />
-              </button>
-              <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium text-white/90">{r.name}</div>
-                <div className="text-xs text-white/40">
-                  <span className="text-accent">
-                    {TRIGGER_LABEL[r.trigger.type]}
-                  </span>{' '}
-                  → {r.actions.map((a) => ACTION_LABEL[a.type]).join(', ') || '—'}
-                </div>
-              </div>
-              <button
-                onClick={() => setEditing(r)}
-                className="rounded-md px-2 py-1 text-xs text-white/60 hover:bg-white/5 hover:text-white"
-              >
-                Editar
-              </button>
-              <button
-                onClick={() => confirm(`Remover "${r.name}"?`) && removeMut.mutate(r.id)}
-                className="rounded-md p-2 text-white/40 hover:bg-white/5 hover:text-rose-400"
-                title="Remover"
-              >
-                <Trash2 size={14} />
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {editing && (
-        <RuleEditor
-          rule={editing === 'new' ? null : editing}
-          onClose={() => setEditing(null)}
-          onSaved={() => {
-            qc.invalidateQueries({ queryKey: ['automations'] });
-            setEditing(null);
-          }}
-        />
-      )}
+      <Dialog
+        open={!!editing}
+        onOpenChange={(open) => !open && setEditing(null)}
+      >
+        {editing && (
+          <RuleEditor
+            rule={editing === 'new' ? null : editing}
+            onClose={() => setEditing(null)}
+            onSaved={() => {
+              qc.invalidateQueries({ queryKey: ['automations'] });
+              setEditing(null);
+            }}
+          />
+        )}
+      </Dialog>
     </div>
   );
 }
@@ -197,89 +219,84 @@ function RuleEditor({
     setActions((prev) => prev.map((a, idx) => (idx === i ? next : a)));
   }
 
+  const selectCls =
+    'w-full rounded-md border border-default bg-surface px-3 py-2 text-sm text-fg outline-none focus:ring-2 focus:ring-[hsl(var(--accent)/0.4)]';
+
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-lg space-y-4 rounded-xl bg-[#111b21] p-5 text-white shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold">
-            {rule ? 'Editar regra' : 'Nova regra'}
-          </h2>
-          <label className="flex items-center gap-2 text-xs">
-            <input
-              type="checkbox"
-              checked={enabled}
-              onChange={(e) => setEnabled(e.target.checked)}
-            />
-            Ativa
-          </label>
+    <DialogContent className="max-w-lg">
+      <DialogHeader>
+        <DialogTitle>{rule ? 'Editar regra' : 'Nova regra'}</DialogTitle>
+      </DialogHeader>
+
+      <div className="space-y-4">
+        <div className="flex items-center justify-between rounded-lg border border-default bg-bg-subtle p-3">
+          <span className="text-sm text-fg">Regra ativa</span>
+          <Switch checked={enabled} onCheckedChange={setEnabled} />
         </div>
 
         <div>
-          <label className="mb-1 block text-xs text-white/50">Nome</label>
-          <input
+          <label className="mb-1 block text-xs font-medium text-fg-muted">Nome</label>
+          <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-md bg-white/5 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-accent"
             placeholder="Ex.: Boas-vindas"
           />
         </div>
 
         <div>
-          <label className="mb-1 block text-xs text-white/50">Gatilho</label>
+          <label className="mb-1 block text-xs font-medium text-fg-muted">Gatilho</label>
           <select
             value={triggerType}
             onChange={(e) => setTriggerType(e.target.value as TriggerType)}
-            className="w-full rounded-md bg-white/5 px-3 py-2 text-sm outline-none"
+            className={selectCls}
           >
             <option value="message.received">Mensagem recebida</option>
             <option value="lead.created">Lead criado</option>
             <option value="lead.moved">Lead movido</option>
           </select>
           {triggerType === 'message.received' && (
-            <input
+            <Input
               value={contains}
               onChange={(e) => setContains(e.target.value)}
               placeholder="Contém (opcional) — ex.: preço"
-              className="mt-2 w-full rounded-md bg-white/5 px-3 py-2 text-sm outline-none"
+              className="mt-2"
             />
           )}
           {triggerType === 'lead.moved' && (
-            <input
+            <Input
               value={toColumnId}
               onChange={(e) => setToColumnId(e.target.value)}
               placeholder="ID da coluna destino (opcional)"
-              className="mt-2 w-full rounded-md bg-white/5 px-3 py-2 text-sm outline-none"
+              className="mt-2"
             />
           )}
         </div>
 
         <div>
           <div className="mb-1 flex items-center justify-between">
-            <label className="text-xs text-white/50">Ações</label>
+            <label className="text-xs font-medium text-fg-muted">Ações</label>
             <button
+              type="button"
               onClick={() =>
                 setActions((p) => [...p, { type: 'send_message', text: '' }])
               }
-              className="text-xs text-accent hover:underline"
+              className="text-xs font-medium text-accent hover:underline"
             >
               + adicionar
             </button>
           </div>
           <div className="space-y-2">
             {actions.map((a, i) => (
-              <div key={i} className="flex items-start gap-2 rounded-md bg-white/5 p-2">
+              <div
+                key={i}
+                className="flex items-start gap-2 rounded-lg border border-default bg-bg-subtle p-2"
+              >
                 <select
                   value={a.type}
                   onChange={(e) =>
                     changeActionType(i, e.target.value as AutomationAction['type'])
                   }
-                  className="rounded bg-white/5 px-2 py-1 text-xs outline-none"
+                  className="rounded border border-default bg-surface px-2 py-1.5 text-xs text-fg outline-none"
                 >
                   <option value="send_message">Enviar mensagem</option>
                   <option value="move_to_column">Mover p/ coluna</option>
@@ -287,59 +304,54 @@ function RuleEditor({
                 </select>
                 <div className="flex-1">
                   {a.type === 'send_message' && (
-                    <textarea
+                    <Textarea
                       rows={2}
                       value={a.text}
                       onChange={(e) => updateAction(i, { text: e.target.value })}
-                      className="w-full rounded bg-white/5 px-2 py-1 text-xs outline-none"
                       placeholder="Texto da mensagem"
                     />
                   )}
                   {a.type === 'move_to_column' && (
-                    <input
+                    <Input
                       value={a.columnId}
                       onChange={(e) => updateAction(i, { columnId: e.target.value })}
-                      className="w-full rounded bg-white/5 px-2 py-1 text-xs outline-none"
                       placeholder="ID da coluna"
                     />
                   )}
                   {a.type === 'add_tag' && (
-                    <input
+                    <Input
                       value={a.tag}
                       onChange={(e) => updateAction(i, { tag: e.target.value })}
-                      className="w-full rounded bg-white/5 px-2 py-1 text-xs outline-none"
                       placeholder="Tag"
                     />
                   )}
                 </div>
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={() => setActions((p) => p.filter((_, idx) => idx !== i))}
-                  className="rounded p-1 text-white/40 hover:bg-white/5 hover:text-rose-400"
                   title="Remover"
                 >
-                  <Trash2 size={13} />
-                </button>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
               </div>
             ))}
           </div>
         </div>
-
-        <div className="flex justify-end gap-2 pt-2">
-          <button
-            onClick={onClose}
-            className="rounded-md px-3 py-1.5 text-sm text-white/60 hover:bg-white/5"
-          >
-            Cancelar
-          </button>
-          <button
-            disabled={!canSave || saveMut.isPending}
-            onClick={() => saveMut.mutate()}
-            className="rounded-md bg-accent px-4 py-1.5 text-sm font-medium text-white transition hover:bg-accent-hover disabled:opacity-40"
-          >
-            {saveMut.isPending ? '...' : 'Salvar'}
-          </button>
-        </div>
       </div>
-    </div>
+
+      <DialogFooter>
+        <Button variant="outline" onClick={onClose}>
+          Cancelar
+        </Button>
+        <Button
+          disabled={!canSave}
+          loading={saveMut.isPending}
+          onClick={() => saveMut.mutate()}
+        >
+          Salvar
+        </Button>
+      </DialogFooter>
+    </DialogContent>
   );
 }

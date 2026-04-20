@@ -82,6 +82,7 @@
   .bg-accent-hover { background-color: hsl(var(--accent-hover)); }
   .bg-danger { background-color: hsl(var(--danger)); }
   .bg-success { background-color: hsl(var(--success)); }
+  .bg-warning { background-color: hsl(var(--warning)); }
 
   .text-fg { color: hsl(var(--fg)); }
   .text-fg-muted { color: hsl(var(--fg-muted)); }
@@ -90,6 +91,7 @@
   .text-accent-fg { color: hsl(var(--accent-fg)); }
   .text-danger { color: hsl(var(--danger)); }
   .text-success { color: hsl(var(--success)); }
+  .text-warning { color: hsl(var(--warning)); }
 
   .border-default { border-color: hsl(var(--border)); }
   .border-strong { border-color: hsl(var(--border-strong)); }
