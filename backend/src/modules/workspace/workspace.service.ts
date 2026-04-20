@@ -7,6 +7,7 @@ import { Role } from '@prisma/client';
 
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { slugify, randomSuffix } from '../../shared/utils/slug';
+import { seedDefaultBoard } from '../../shared/utils/seed-default-board';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 
 @Injectable()
@@ -29,12 +30,16 @@ export class WorkspaceService {
 
   async create(userId: string, dto: CreateWorkspaceDto) {
     const slug = `${slugify(dto.name) || 'workspace'}-${randomSuffix()}`;
-    const workspace = await this.prisma.workspace.create({
-      data: {
-        name: dto.name,
-        slug,
-        memberships: { create: { userId, role: 'ADMIN' } },
-      },
+    const workspace = await this.prisma.$transaction(async (tx) => {
+      const ws = await tx.workspace.create({
+        data: {
+          name: dto.name,
+          slug,
+          memberships: { create: { userId, role: 'ADMIN' } },
+        },
+      });
+      await seedDefaultBoard(tx, ws.id);
+      return ws;
     });
     return { id: workspace.id, name: workspace.name, slug: workspace.slug, role: 'ADMIN' as Role };
   }

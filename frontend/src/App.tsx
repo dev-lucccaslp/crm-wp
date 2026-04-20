@@ -6,7 +6,14 @@ import { ToastProvider } from './components/ui/Toast';
 import { AppRoutes } from './app/routes';
 
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { staleTime: 30_000, refetchOnWindowFocus: false } },
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8_000),
+    },
+  },
 });
 
 export default function App() {

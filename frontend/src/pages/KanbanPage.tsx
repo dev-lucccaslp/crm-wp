@@ -35,13 +35,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../components/ui/DropdownMenu';
-import { Check, ChevronDown } from 'lucide-react';
+import { Check, ChevronDown, Kanban as KanbanIcon } from 'lucide-react';
+import { EmptyState } from '../components/ui/EmptyState';
+import { ErrorState } from '../components/ui/ErrorState';
 
 void SortableLeadCard;
 
 export default function KanbanPage() {
   const qc = useQueryClient();
-  const { data: boards } = useQuery({
+  const {
+    data: boards,
+    isLoading: boardsLoading,
+    error: boardsError,
+    refetch: refetchBoards,
+  } = useQuery({
     queryKey: ['boards'],
     queryFn: kanbanService.listBoards,
   });
@@ -53,10 +60,23 @@ export default function KanbanPage() {
     }
   }, [boards, boardId]);
 
-  const { data: board, isLoading } = useQuery({
+  const {
+    data: board,
+    isLoading,
+    error: boardError,
+    refetch: refetchBoard,
+  } = useQuery({
     queryKey: ['board', boardId],
     queryFn: () => kanbanService.getBoard(boardId!),
     enabled: !!boardId,
+  });
+
+  const createDefaultBoardMut = useMutation({
+    mutationFn: () =>
+      kanbanService
+        .listBoards // força o lazy-seed do backend: basta pedir a lista
+        (),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['boards'] }),
   });
 
   useBoardSync(boardId ?? undefined);
@@ -211,7 +231,40 @@ export default function KanbanPage() {
         )}
       </header>
 
-      {isLoading || !board ? (
+      {boardsError ? (
+        <div className="flex flex-1 items-center justify-center p-6">
+          <ErrorState
+            error={boardsError}
+            onRetry={() => refetchBoards()}
+            title="Não foi possível carregar os boards"
+          />
+        </div>
+      ) : boardError ? (
+        <div className="flex flex-1 items-center justify-center p-6">
+          <ErrorState
+            error={boardError}
+            onRetry={() => refetchBoard()}
+            title="Não foi possível carregar o board"
+          />
+        </div>
+      ) : !boardsLoading && boards && boards.length === 0 ? (
+        <div className="flex flex-1 items-center justify-center p-6">
+          <EmptyState
+            icon={KanbanIcon}
+            title="Nenhum board ainda"
+            description="Vamos criar um pipeline padrão com colunas Novo → Ganho para você começar."
+            action={
+              <Button
+                size="sm"
+                loading={createDefaultBoardMut.isPending}
+                onClick={() => createDefaultBoardMut.mutate()}
+              >
+                Criar pipeline padrão
+              </Button>
+            }
+          />
+        </div>
+      ) : isLoading || !board ? (
         <div className="flex flex-1 gap-3 overflow-hidden p-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="w-[288px] shrink-0 space-y-3 rounded-xl bg-bg-subtle p-3">

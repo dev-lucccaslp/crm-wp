@@ -10,6 +10,7 @@ import { createHash, randomBytes } from 'crypto';
 
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { slugify, randomSuffix } from '../../shared/utils/slug';
+import { seedDefaultBoard } from '../../shared/utils/seed-default-board';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 
@@ -44,7 +45,7 @@ export class AuthService {
           passwordHash,
         },
       });
-      await tx.workspace.create({
+      const workspace = await tx.workspace.create({
         data: {
           name: dto.workspaceName,
           slug,
@@ -53,6 +54,7 @@ export class AuthService {
           },
         },
       });
+      await seedDefaultBoard(tx, workspace.id);
       return created;
     });
 

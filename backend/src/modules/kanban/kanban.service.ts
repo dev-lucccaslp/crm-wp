@@ -22,6 +22,7 @@ import {
 } from './dto/column.dto';
 import { CreateLeadDto, MoveLeadDto, UpdateLeadDto } from './dto/lead.dto';
 import { BillingService } from '../billing/billing.service';
+import { seedDefaultBoard } from '../../shared/utils/seed-default-board';
 
 @Injectable()
 export class KanbanService {
@@ -34,7 +35,17 @@ export class KanbanService {
 
   // ============ BOARDS ============
 
-  listBoards(workspaceId: string) {
+  async listBoards(workspaceId: string) {
+    const boards = await this.prisma.kanbanBoard.findMany({
+      where: { workspaceId },
+      orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
+    });
+    if (boards.length > 0) return boards;
+    // Lazy-seed: workspaces antigos (pré Fase 10) podem não ter um board ainda.
+    await this.prisma.$transaction(async (tx) => {
+      const existing = await tx.kanbanBoard.count({ where: { workspaceId } });
+      if (existing === 0) await seedDefaultBoard(tx, workspaceId);
+    });
     return this.prisma.kanbanBoard.findMany({
       where: { workspaceId },
       orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
