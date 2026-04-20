@@ -44,6 +44,19 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref,
   ) => {
     const Comp: any = asChild ? Slot : 'button';
+    // Slot exige exatamente um filho — em asChild, repassamos `children` sem
+    // irmãos (sem loader spinner).
+    if (asChild) {
+      return (
+        <Comp
+          ref={ref}
+          className={cn(buttonVariants({ variant, size }), className)}
+          {...rest}
+        >
+          {children}
+        </Comp>
+      );
+    }
     return (
       <Comp
         ref={ref}
