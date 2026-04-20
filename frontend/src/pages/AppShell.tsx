@@ -11,6 +11,7 @@ import {
   BarChart2,
   Settings,
   Zap,
+  CreditCard,
   PanelLeftClose,
   PanelLeftOpen,
   Check,
@@ -46,6 +47,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/app/automations', label: 'Automações', icon: Zap },
   { to: '/app/contacts', label: 'Contatos', icon: Users },
   { to: '/app/reports', label: 'Relatórios', icon: BarChart2 },
+  { to: '/app/billing', label: 'Plano', icon: CreditCard },
   { to: '/app/settings', label: 'Configurações', icon: Settings },
 ];
 

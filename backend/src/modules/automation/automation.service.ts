@@ -5,6 +5,7 @@ import { PrismaService } from '../../infra/prisma/prisma.service';
 import { WsGateway, WS_EVENTS } from '../../infra/websocket/ws.gateway';
 import { EvolutionApiClient } from '../whatsapp/evolution-api.client';
 import { MessageMediaType } from '@prisma/client';
+import { BillingService } from '../billing/billing.service';
 
 import type {
   AutomationAction,
@@ -26,6 +27,7 @@ export class AutomationService {
     private readonly prisma: PrismaService,
     private readonly ws: WsGateway,
     private readonly evo: EvolutionApiClient,
+    private readonly billing: BillingService,
   ) {}
 
   // ============ CRUD ============
@@ -38,6 +40,7 @@ export class AutomationService {
   }
 
   async create(workspaceId: string, dto: CreateAutomationDto) {
+    await this.billing.ensureWithinLimit(workspaceId, 'automationRules');
     return this.prisma.automationRule.create({
       data: {
         workspaceId,

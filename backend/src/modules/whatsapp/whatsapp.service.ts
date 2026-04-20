@@ -20,6 +20,7 @@ import { PrismaService } from '../../infra/prisma/prisma.service';
 import { WsGateway, WS_EVENTS } from '../../infra/websocket/ws.gateway';
 import { EvolutionApiClient } from './evolution-api.client';
 import { CreateInstanceDto } from './dto/create-instance.dto';
+import { BillingService } from '../billing/billing.service';
 
 type EvolutionEvent = {
   event?: string;
@@ -37,6 +38,7 @@ export class WhatsappService {
     private readonly ws: WsGateway,
     private readonly config: ConfigService,
     private readonly events: EventEmitter2,
+    private readonly billing: BillingService,
   ) {}
 
   private webhookUrl(secret: string) {
@@ -65,6 +67,7 @@ export class WhatsappService {
   }
 
   async createInstance(workspaceId: string, dto: CreateInstanceDto) {
+    await this.billing.ensureWithinLimit(workspaceId, 'whatsappInstances');
     const webhookSecret = randomBytes(24).toString('hex');
     const evolutionInstance = `ws-${workspaceId}-${randomBytes(4).toString('hex')}`;
 

@@ -21,6 +21,7 @@ import {
   UpdateColumnDto,
 } from './dto/column.dto';
 import { CreateLeadDto, MoveLeadDto, UpdateLeadDto } from './dto/lead.dto';
+import { BillingService } from '../billing/billing.service';
 
 @Injectable()
 export class KanbanService {
@@ -28,6 +29,7 @@ export class KanbanService {
     private readonly prisma: PrismaService,
     private readonly ws: WsGateway,
     private readonly events: EventEmitter2,
+    private readonly billing: BillingService,
   ) {}
 
   // ============ BOARDS ============
@@ -62,6 +64,7 @@ export class KanbanService {
   }
 
   async createBoard(workspaceId: string, dto: CreateBoardDto) {
+    await this.billing.ensureWithinLimit(workspaceId, 'kanbanBoards');
     if (dto.isDefault) {
       await this.prisma.kanbanBoard.updateMany({
         where: { workspaceId, isDefault: true },

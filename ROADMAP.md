@@ -194,13 +194,13 @@ Schema completo será escrito na **Fase 2**.
 - [ ] 5.4 Worker BullMQ consumindo eventos e executando regras _(adiado — execução síncrona por EventEmitter2, migra p/ BullMQ junto com 4.5)_
 - [x] 5.5 UI de editor de regras (simples, sem DSL) — página `/app/automations`
 
-### Fase 6 — Stripe 💳
-- [ ] 6.1 Modelo `Subscription` + planos em código (`PlanId` enum)
-- [ ] 6.2 Checkout session + customer portal
-- [ ] 6.3 Webhook Stripe (assinatura validada)
-- [ ] 6.4 Guard `PlanGuard` — bloqueia features acima do plano
-- [ ] 6.5 Bloqueio automático por inadimplência (cron diário)
-- [ ] 6.6 UI de planos + billing
+### Fase 6 — Stripe 💳 ✅
+- [x] 6.1 `Subscription` (já no schema) + config `PLANS` (FREE/PRO/ENTERPRISE) com limites e features
+- [x] 6.2 `POST /billing/checkout` (Stripe Checkout) + `POST /billing/portal` (customer portal)
+- [x] 6.3 `POST /webhooks/stripe` com `rawBody` + `constructEvent` (assinatura HMAC)
+- [x] 6.4 `PlanGuard` + `@RequiresPlan` e `ensureWithinLimit` aplicado em create instance / board / automation
+- [x] 6.5 Cron diário `@Cron(EVERY_DAY_AT_3AM)` — PAST_DUE > 3d → downgrade p/ FREE
+- [x] 6.6 Página `/app/billing` — plano atual, uso vs limites, cards dos planos, portal Stripe
 
 ### Fase 7 — Admin 🛠️
 - [ ] 7.1 Role super-admin (fora do `Membership`)

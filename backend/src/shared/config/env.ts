@@ -27,6 +27,19 @@ const schema = z.object({
   EVOLUTION_WEBHOOK_TOKEN: z.string(),
 
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
+
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  STRIPE_PRICE_PRO: z.string().optional(),
+  STRIPE_PRICE_ENTERPRISE: z.string().optional(),
+  BILLING_SUCCESS_URL: z
+    .string()
+    .url()
+    .default('http://localhost:5173/app/settings/billing?success=1'),
+  BILLING_CANCEL_URL: z
+    .string()
+    .url()
+    .default('http://localhost:5173/app/settings/billing?canceled=1'),
 });
 
 export type Env = z.infer<typeof schema>;
