@@ -65,6 +65,41 @@ const ADMIN_ITEM: NavItem = {
   icon: ShieldCheck,
 };
 
+function NavItemLink({
+  item,
+  collapsed,
+  currentPath,
+}: {
+  item: NavItem;
+  collapsed: boolean;
+  currentPath: string;
+}) {
+  const isActive = item.end
+    ? currentPath === item.to
+    : currentPath === item.to || currentPath.startsWith(item.to + '/');
+  const className = cn(
+    'group flex items-center rounded-md text-sm font-medium transition-colors',
+    collapsed ? 'h-10 w-10 justify-center mx-auto' : 'h-9 px-2 gap-3',
+    isActive
+      ? 'bg-[hsl(var(--accent)/0.12)] text-accent'
+      : 'text-fg-muted hover:bg-surface-hover hover:text-fg',
+  );
+  const link = (
+    <NavLink to={item.to} end={item.end} className={className}>
+      <item.icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.9} />
+      {!collapsed && <span className="truncate">{item.label}</span>}
+    </NavLink>
+  );
+  if (collapsed) {
+    return (
+      <QuickTooltip content={item.label} side="right">
+        {link}
+      </QuickTooltip>
+    );
+  }
+  return link;
+}
+
 export default function AppShell() {
   const navigate = useNavigate();
   const { theme, toggle } = useTheme();
@@ -256,34 +291,14 @@ export default function AppShell() {
             collapsed ? 'p-2' : 'p-2',
           )}
         >
-          {(user.isSuperAdmin ? [...NAV_ITEMS, ADMIN_ITEM] : NAV_ITEMS).map((item) => {
-            const content = (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                className={({ isActive }) =>
-                  cn(
-                    'group flex items-center rounded-md text-sm font-medium transition-colors',
-                    collapsed ? 'h-10 w-10 justify-center mx-auto' : 'h-9 px-2 gap-3',
-                    isActive
-                      ? 'bg-[hsl(var(--accent)/0.12)] text-accent'
-                      : 'text-fg-muted hover:bg-surface-hover hover:text-fg',
-                  )
-                }
-              >
-                <item.icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.9} />
-                {!collapsed && <span className="truncate">{item.label}</span>}
-              </NavLink>
-            );
-            return collapsed ? (
-              <QuickTooltip key={item.to} content={item.label} side="right">
-                {content}
-              </QuickTooltip>
-            ) : (
-              content
-            );
-          })}
+          {(user.isSuperAdmin ? [...NAV_ITEMS, ADMIN_ITEM] : NAV_ITEMS).map((item) => (
+            <NavItemLink
+              key={item.to}
+              item={item}
+              collapsed={collapsed}
+              currentPath={location.pathname}
+            />
+          ))}
         </nav>
 
         {/* Footer */}
