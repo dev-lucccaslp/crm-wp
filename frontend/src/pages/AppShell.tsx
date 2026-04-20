@@ -154,7 +154,7 @@ export default function AppShell() {
         className={cn(
           'flex shrink-0 flex-col border-r border-default bg-surface transition-[width,transform] duration-200 ease-out',
           // desktop: largura dinâmica
-          collapsed ? 'md:w-[60px]' : 'md:w-[240px]',
+          collapsed ? 'md:w-[68px]' : 'md:w-[240px]',
           // mobile: drawer fixo
           'fixed inset-y-0 left-0 z-40 w-[260px] md:static md:translate-x-0',
           mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
@@ -272,7 +272,10 @@ export default function AppShell() {
                   )
                 }
               >
-                <item.icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.9} />
+                <item.icon
+                  className={cn('shrink-0', collapsed ? 'h-5 w-5' : 'h-[18px] w-[18px]')}
+                  strokeWidth={2}
+                />
                 {!collapsed && <span className="truncate">{item.label}</span>}
               </NavLink>
             );
@@ -299,7 +302,7 @@ export default function AppShell() {
                 onClick={toggleSidebar}
                 className="mb-1 flex h-10 w-10 items-center justify-center rounded-md text-fg-muted transition hover:bg-surface-hover hover:text-fg mx-auto"
               >
-                <PanelLeftOpen className="h-4 w-4" />
+                <PanelLeftOpen className="h-[18px] w-[18px]" strokeWidth={2} />
               </button>
             </QuickTooltip>
           )}
@@ -315,9 +318,9 @@ export default function AppShell() {
                 className="flex h-10 w-10 items-center justify-center rounded-md text-fg-muted transition hover:bg-surface-hover hover:text-fg mx-auto"
               >
                 {theme === 'dark' ? (
-                  <Sun className="h-4 w-4" />
+                  <Sun className="h-[18px] w-[18px]" strokeWidth={2} />
                 ) : (
-                  <Moon className="h-4 w-4" />
+                  <Moon className="h-[18px] w-[18px]" strokeWidth={2} />
                 )}
               </button>
             </QuickTooltip>
