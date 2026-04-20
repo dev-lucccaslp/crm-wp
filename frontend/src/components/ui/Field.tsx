@@ -11,11 +11,9 @@ export function Field({
 }) {
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="text-xs font-medium text-neutral-600 dark:text-neutral-400">
-        {label}
-      </span>
+      <span className="text-xs font-medium text-fg-muted">{label}</span>
       {children}
-      {error && <span className="text-xs text-red-500">{error}</span>}
+      {error && <span className="text-xs text-danger">{error}</span>}
     </label>
   );
 }

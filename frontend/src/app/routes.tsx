@@ -12,6 +12,9 @@ import ChatPage from '../pages/ChatPage';
 import AutomationPage from '../pages/AutomationPage';
 import BillingPage from '../pages/BillingPage';
 import AdminPage from '../pages/AdminPage';
+import ContactsPage from '../pages/ContactsPage';
+import ReportsPage from '../pages/ReportsPage';
+import SettingsPage from '../pages/SettingsPage';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((s) => s.user);
@@ -69,6 +72,9 @@ export function AppRoutes() {
         <Route path="billing" element={<BillingPage />} />
         <Route path="settings/billing" element={<BillingPage />} />
         <Route path="admin" element={<AdminPage />} />
+        <Route path="contacts" element={<ContactsPage />} />
+        <Route path="reports" element={<ReportsPage />} />
+        <Route path="settings" element={<SettingsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/app" replace />} />
     </Routes>

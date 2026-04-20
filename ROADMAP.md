@@ -223,17 +223,25 @@ Schema completo será escrito na **Fase 2**.
 - [x] 9.4 `CommandPalette` (⌘K) com navegação, tema e logout via teclado
 - [x] 9.5 AppShell responsivo — top bar mobile, drawer com backdrop, fecha ao navegar
 
-### Fase 10 — QA pós-fase 9 (feedback do usuário 2026-04-20) 🐛
-> Revisar **após concluir a Fase 9** — pontos levantados em review:
-- [ ] 10.1 **Dark mode bugado**: auditar tokens CSS, contrastes, estados hover/active,
-      bordas e elementos que permanecem em tons claros no tema escuro (e vice-versa).
-      Rodar checklist página-a-página.
-- [ ] 10.2 **Páginas que não carregam / sem funcionalidade**: varredura completa de
-      todas as rotas (`/app`, `/app/chat`, `/app/kanban`, `/app/whatsapp`,
-      `/app/automations`, `/app/contacts`, `/app/reports`, `/app/billing`,
-      `/app/settings`, `/app/admin`) — identificar páginas stub, endpoints
-      faltantes, estados de erro silenciosos e completar funcionalidades pendentes.
-- [ ] 10.3 Listar bugs encontrados em issues/checkpoints e priorizar correções.
+### Fase 10 — QA pós-fase 9 (feedback do usuário 2026-04-20) 🐛 ✅
+- [x] 10.1 **Dark mode**: `Field`, `SignupPage`, `NewWorkspacePage` e `ChatPage` migrados
+      de `neutral-*`/hardcoded (`#111b21`, `#0b141a`, `#202c33`, `#2a3942`, `#005c4b`)
+      para tokens (`bg-surface`, `bg-bg`, `text-fg`, `bg-accent`, etc.). Padrão de fundo
+      do chat também usa `hsl(var(--fg) / 0.04)` para respeitar o tema.
+- [x] 10.2 **Páginas que não carregavam**: rotas `/app/contacts`, `/app/reports` e
+      `/app/settings` estavam no NAV mas sem registro — faziam bounce pro Dashboard.
+      Criadas as páginas:
+  - `ContactsPage`: lista leads consolidada a partir de `/kanban/boards` (com Skeleton,
+    EmptyState e ErrorState).
+  - `ReportsPage`: placeholder com EmptyState (endpoints de relatório no backlog).
+  - `SettingsPage`: hub navegacional com atalhos p/ Billing e Admin (quando super-admin).
+- [x] 10.3 Rotas agora registradas em `app/routes.tsx`; typecheck limpo.
+
+#### Backlog derivado (para uma Fase 11 futura)
+- [ ] Módulo Contatos real (dedup por telefone, histórico unificado, CRUD próprio)
+- [ ] Endpoints de Relatórios por workspace (conversão/board, funil, heatmap)
+- [ ] Edição de perfil e workspace em `SettingsPage`
+- [ ] Auditoria contínua de dark mode conforme novas páginas forem criadas
 
 ---
 

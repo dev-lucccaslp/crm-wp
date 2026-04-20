@@ -119,22 +119,22 @@ export default function ChatPage() {
   return (
     <div className="flex h-full w-full overflow-hidden">
       {/* ── Left panel ── */}
-      <div className="flex w-[340px] shrink-0 flex-col border-r border-white/[0.06] bg-[#111b21]">
+      <div className="flex w-[340px] shrink-0 flex-col border-r border-default bg-surface">
 
         {/* Instance header */}
         {connectedInstance && (
-          <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+          <div className="flex items-center justify-between border-b border-default px-4 py-3">
             <div className="flex items-center gap-3">
               <Avatar name={connectedInstance.name} size={9} />
               <div>
-                <div className="text-sm font-semibold text-white">
+                <div className="text-sm font-semibold text-fg">
                   {connectedInstance.name}
                 </div>
-                <div className="flex items-center gap-1.5 text-xs text-white/40">
+                <div className="flex items-center gap-1.5 text-xs text-fg-subtle">
                   <span
                     className={cn(
                       'h-1.5 w-1.5 rounded-full',
-                      connectedInstance.status === 'CONNECTED' ? 'bg-emerald-400' : 'bg-neutral-500',
+                      connectedInstance.status === 'CONNECTED' ? 'bg-success' : 'bg-fg-subtle',
                     )}
                   />
                   {connectedInstance.status === 'CONNECTED' ? 'CONECTADO' : connectedInstance.status}
@@ -144,7 +144,7 @@ export default function ChatPage() {
             <div className="flex items-center gap-1">
               <button
                 onClick={() => qc.invalidateQueries({ queryKey: ['chat', 'conversations'] })}
-                className="rounded-lg p-2 text-white/40 transition hover:bg-white/10 hover:text-white"
+                className="rounded-lg p-2 text-fg-muted transition hover:bg-surface-hover hover:text-fg"
                 title="Atualizar"
               >
                 <RefreshCw size={15} />
@@ -155,13 +155,13 @@ export default function ChatPage() {
 
         {/* Search */}
         <div className="px-3 py-2">
-          <div className="flex items-center gap-2 rounded-lg bg-white/[0.06] px-3 py-2">
-            <Search size={14} className="shrink-0 text-white/40" />
+          <div className="flex items-center gap-2 rounded-lg bg-surface-hover px-3 py-2">
+            <Search size={14} className="shrink-0 text-fg-subtle" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Pesquisar conversa..."
-              className="flex-1 bg-transparent text-sm text-white/80 placeholder:text-white/30 outline-none"
+              className="flex-1 bg-transparent text-sm text-fg placeholder:text-fg-subtle outline-none"
             />
           </div>
         </div>
@@ -169,7 +169,7 @@ export default function ChatPage() {
         {/* Conversation list */}
         <div className="flex-1 overflow-y-auto">
           {filtered.length === 0 && (
-            <div className="px-4 py-6 text-center text-xs text-white/30">
+            <div className="px-4 py-6 text-center text-xs text-fg-subtle">
               Nenhuma conversa ainda.
             </div>
           )}
@@ -188,24 +188,24 @@ export default function ChatPage() {
                   }
                 }}
                 className={cn(
-                  'flex w-full items-center gap-3 border-b border-white/[0.04] px-4 py-3 text-left transition',
-                  isSelected ? 'bg-[#2a3942]' : 'hover:bg-white/[0.04]',
+                  'flex w-full items-center gap-3 border-b border-default px-4 py-3 text-left transition',
+                  isSelected ? 'bg-[hsl(var(--accent)/0.12)]' : 'hover:bg-surface-hover',
                 )}
               >
                 <Avatar name={label} size={10} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between">
-                    <span className="truncate text-sm font-medium text-white/90">{label}</span>
-                    <span className="ml-2 shrink-0 text-[11px] text-white/30">
+                    <span className="truncate text-sm font-medium text-fg">{label}</span>
+                    <span className="ml-2 shrink-0 text-[11px] text-fg-subtle">
                       {formatTime(c.lastMessageAt)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-xs text-white/40">
+                    <span className="truncate text-xs text-fg-muted">
                       {c.lastMessageText ?? '—'}
                     </span>
                     {c.unreadCount > 0 && (
-                      <span className="shrink-0 rounded-full bg-emerald-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                      <span className="shrink-0 rounded-full bg-success px-1.5 py-0.5 text-[10px] font-semibold text-white">
                         {c.unreadCount}
                       </span>
                     )}
@@ -218,14 +218,14 @@ export default function ChatPage() {
       </div>
 
       {/* ── Right: thread ── */}
-      <div className="flex flex-1 flex-col bg-[#0b141a]">
+      <div className="flex flex-1 flex-col bg-bg">
         {selected ? (
           <Thread key={selected.id} conversation={selected} />
         ) : (
           <div className="flex flex-1 items-center justify-center">
             <div className="text-center">
-              <div className="mb-3 text-5xl opacity-10">💬</div>
-              <p className="text-sm text-white/30">Selecione uma conversa</p>
+              <div className="mb-3 text-5xl opacity-20">💬</div>
+              <p className="text-sm text-fg-subtle">Selecione uma conversa</p>
             </div>
           </div>
         )}
@@ -262,17 +262,17 @@ function Thread({ conversation }: { conversation: Conversation }) {
   return (
     <>
       {/* Thread header */}
-      <header className="flex items-center justify-between border-b border-white/[0.06] bg-[#202c33] px-4 py-3">
+      <header className="flex items-center justify-between border-b border-default bg-surface px-4 py-3">
         <div className="flex items-center gap-3">
           <Avatar name={contactLabel} size={9} />
           <div>
-            <div className="text-sm font-semibold text-white">{contactLabel}</div>
-            <div className="text-xs text-white/40">{conversation.contact.phone}</div>
+            <div className="text-sm font-semibold text-fg">{contactLabel}</div>
+            <div className="text-xs text-fg-subtle">{conversation.contact.phone}</div>
           </div>
         </div>
         <button
           title="Apagar conversa"
-          className="rounded-lg p-2 text-white/30 transition hover:bg-white/10 hover:text-red-400"
+          className="rounded-lg p-2 text-fg-muted transition hover:bg-surface-hover hover:text-danger"
         >
           <Trash2 size={15} />
         </button>
@@ -282,13 +282,13 @@ function Thread({ conversation }: { conversation: Conversation }) {
       <div
         ref={scrollRef}
         className="flex-1 space-y-1 overflow-y-auto px-8 py-4"
-        style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 0)', backgroundSize: '24px 24px' }}
+        style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, hsl(var(--fg) / 0.04) 1px, transparent 0)', backgroundSize: '24px 24px' }}
       >
         {messages.map((m) => (
           <MessageBubble key={m.id} msg={m} />
         ))}
         {messages.length === 0 && (
-          <div className="text-center text-xs text-white/20 pt-8">
+          <div className="text-center text-xs text-fg-subtle pt-8">
             Sem mensagens ainda.
           </div>
         )}
@@ -303,13 +303,13 @@ function Thread({ conversation }: { conversation: Conversation }) {
           sendMut.mutate(v);
           setText('');
         }}
-        className="flex items-center gap-2 border-t border-white/[0.06] bg-[#202c33] px-4 py-3"
+        className="flex items-center gap-2 border-t border-default bg-surface px-4 py-3"
       >
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Digite uma mensagem"
-          className="flex-1 rounded-lg bg-[#2a3942] px-4 py-2.5 text-sm text-white placeholder:text-white/30 outline-none focus:ring-1 focus:ring-white/10"
+          className="flex-1 rounded-lg bg-surface-hover px-4 py-2.5 text-sm text-fg placeholder:text-fg-subtle outline-none focus:ring-1 focus:ring-accent"
         />
         <button
           type="submit"
@@ -331,8 +331,8 @@ function MessageBubble({ msg }: { msg: Message }) {
         className={cn(
           'relative max-w-[65%] rounded-lg px-3 py-2 text-sm shadow-md',
           mine
-            ? 'rounded-tr-none bg-[#005c4b] text-white'
-            : 'rounded-tl-none bg-[#202c33] text-white/90',
+            ? 'rounded-tr-none bg-accent text-accent-fg'
+            : 'rounded-tl-none bg-surface text-fg',
         )}
       >
         {msg.mediaType !== 'TEXT' && (

@@ -49,10 +49,10 @@ export default function SignupPage() {
     <div className="flex min-h-screen items-center justify-center p-6">
       <form
         onSubmit={onSubmit}
-        className="w-full max-w-sm rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
+        className="w-full max-w-sm rounded-2xl border border-default bg-surface p-8 shadow-sm"
       >
-        <h1 className="text-2xl font-semibold tracking-tight">Criar conta</h1>
-        <p className="mt-1 text-sm text-neutral-500">
+        <h1 className="text-2xl font-semibold tracking-tight text-fg">Criar conta</h1>
+        <p className="mt-1 text-sm text-fg-muted">
           Começar com um novo workspace.
         </p>
 
@@ -93,15 +93,15 @@ export default function SignupPage() {
               placeholder="Minha Empresa"
             />
           </Field>
-          {error && <p className="text-xs text-red-500">{error}</p>}
+          {error && <p className="text-xs text-danger">{error}</p>}
           <Button type="submit" loading={loading}>
             Criar conta
           </Button>
         </div>
 
-        <p className="mt-6 text-center text-xs text-neutral-500">
+        <p className="mt-6 text-center text-xs text-fg-muted">
           Já tem conta?{' '}
-          <Link to="/login" className="font-medium text-neutral-900 hover:underline dark:text-white">
+          <Link to="/login" className="font-medium text-fg hover:underline">
             Entrar
           </Link>
         </p>
