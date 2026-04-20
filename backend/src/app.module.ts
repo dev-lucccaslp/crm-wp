@@ -1,7 +1,11 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { CryptoModule } from './shared/crypto/crypto.module';
+import { AuditLogInterceptor } from './shared/audit/audit-log.interceptor';
+import { CorrelationIdMiddleware, CORRELATION_HEADER } from './shared/http/correlation-id.middleware';
 import { LoggerModule } from 'nestjs-pino';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -34,9 +38,29 @@ import { AdminModule } from './modules/admin/admin.module';
                 target: 'pino-pretty',
                 options: { singleLine: true, colorize: true },
               },
-        redact: ['req.headers.authorization', 'req.headers.cookie'],
+        redact: [
+          'req.headers.authorization',
+          'req.headers.cookie',
+          'req.headers["x-api-key"]',
+        ],
+        // correlation id: usa o atribuído pelo CorrelationIdMiddleware
+        genReqId: (req, res) => {
+          const existing = (req as { id?: string }).id;
+          const header =
+            (req.headers?.[CORRELATION_HEADER] as string | undefined) ?? existing;
+          const id = header ?? undefined;
+          if (id) {
+            res.setHeader(CORRELATION_HEADER, id);
+            return id;
+          }
+          return undefined as unknown as string;
+        },
+        customProps: (req) => ({
+          reqId: (req as { id?: string }).id,
+        }),
       },
     }),
+    CryptoModule,
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
     PrismaModule,
     WsModule,
@@ -50,6 +74,13 @@ import { AdminModule } from './modules/admin/admin.module';
     AdminModule,
   ],
   controllers: [HealthController],
-  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_INTERCEPTOR, useClass: AuditLogInterceptor },
+  ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(CorrelationIdMiddleware).forRoutes('*');
+  }
+}

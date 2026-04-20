@@ -21,6 +21,7 @@ import { WsGateway, WS_EVENTS } from '../../infra/websocket/ws.gateway';
 import { EvolutionApiClient } from './evolution-api.client';
 import { CreateInstanceDto } from './dto/create-instance.dto';
 import { BillingService } from '../billing/billing.service';
+import { CryptoService } from '../../shared/crypto/crypto.service';
 
 type EvolutionEvent = {
   event?: string;
@@ -39,6 +40,7 @@ export class WhatsappService {
     private readonly config: ConfigService,
     private readonly events: EventEmitter2,
     private readonly billing: BillingService,
+    private readonly crypto: CryptoService,
   ) {}
 
   private webhookUrl(secret: string) {
@@ -68,7 +70,7 @@ export class WhatsappService {
 
   async createInstance(workspaceId: string, dto: CreateInstanceDto) {
     await this.billing.ensureWithinLimit(workspaceId, 'whatsappInstances');
-    const webhookSecret = randomBytes(24).toString('hex');
+    const webhookSecretRaw = randomBytes(24).toString('hex');
     const evolutionInstance = `ws-${workspaceId}-${randomBytes(4).toString('hex')}`;
 
     const instance = await this.prisma.whatsappInstance.create({
@@ -76,7 +78,8 @@ export class WhatsappService {
         workspaceId,
         name: dto.name,
         evolutionInstance,
-        webhookSecret,
+        // armazenado como hash — o segredo em claro só existe na URL do webhook
+        webhookSecret: this.crypto.hash(webhookSecretRaw),
         status: WhatsappStatus.CONNECTING,
       },
     });
@@ -84,7 +87,7 @@ export class WhatsappService {
     try {
       await this.evo.createInstance({
         instanceName: evolutionInstance,
-        webhookUrl: this.webhookUrl(webhookSecret),
+        webhookUrl: this.webhookUrl(webhookSecretRaw),
       });
     } catch (err) {
       await this.prisma.whatsappInstance.update({
@@ -189,8 +192,9 @@ export class WhatsappService {
   // ============ webhook ============
 
   async handleWebhook(webhookSecret: string, payload: EvolutionEvent) {
+    const secretHash = this.crypto.hash(webhookSecret);
     const instance = await this.prisma.whatsappInstance.findFirst({
-      where: { webhookSecret },
+      where: { webhookSecret: secretHash },
       include: { workspace: true },
     });
     if (!instance) {

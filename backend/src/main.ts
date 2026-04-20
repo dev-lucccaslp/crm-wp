@@ -6,12 +6,21 @@ import { Server } from 'socket.io';
 
 import { AppModule } from './app.module';
 import { WsGateway } from './infra/websocket/ws.gateway';
+import { initTracing } from './shared/otel/tracer';
 
 async function bootstrap() {
+  initTracing();
   const app = await NestFactory.create(AppModule, { bufferLogs: true, rawBody: true });
 
   app.useLogger(app.get(Logger));
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: false, // API-only — CSP gerenciado no frontend
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      crossOriginEmbedderPolicy: false,
+      referrerPolicy: { policy: 'no-referrer' },
+    }),
+  );
   const corsOrigin = process.env.CORS_ORIGIN?.split(',') ?? 'http://localhost:5173';
   app.enableCors({ origin: corsOrigin, credentials: true });
   app.setGlobalPrefix('api', { exclude: ['health'] });

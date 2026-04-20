@@ -208,13 +208,13 @@ Schema completo será escrito na **Fase 2**.
 - [x] 7.3 Métricas: totais, leads 30/7d, mensagens in/out, tempo médio resposta, conversão (`GET /admin/metrics`)
 - [x] 7.4 Viewer de `AuditLog` (`GET /admin/audit-logs`) + página `/app/admin` com abas
 
-### Fase 8 — Hardening 🔐
-- [ ] 8.1 Helmet + CORS restrito
-- [ ] 8.2 Criptografia AES-GCM para campos sensíveis (tokens Evolution)
-- [ ] 8.3 Sanitização XSS no frontend (rich text se houver)
-- [ ] 8.4 `AuditLog` interceptor automático em mutations
-- [ ] 8.5 Logs estruturados Pino + correlation id
-- [ ] 8.6 OpenTelemetry-ready (tracer no-op instalado)
+### Fase 8 — Hardening 🔐 ✅
+- [x] 8.1 Helmet com política de referrer/COEP/CORP tightened + CORS por env (`CORS_ORIGIN`)
+- [x] 8.2 `CryptoService` AES-256-GCM (encrypt/decrypt) + hash/HMAC; `webhookSecret` armazenado como SHA-256 (não reversível)
+- [x] 8.3 Frontend sem `dangerouslySetInnerHTML` — toda renderização via React escapa por padrão
+- [x] 8.4 `AuditLogInterceptor` global — registra mutations (POST/PUT/PATCH/DELETE) com user+workspace+entityId
+- [x] 8.5 `CorrelationIdMiddleware` (X-Request-Id) propagado no Pino via `genReqId`/`customProps`
+- [x] 8.6 `initTracing()` stub no-op em `shared/otel/tracer.ts` (chamado em `main.ts` antes do Nest)
 
 ### Fase 9 — UX polish ✨
 - [ ] 9.1 Dark mode (Tailwind `class` strategy)

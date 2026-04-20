@@ -28,6 +28,8 @@ const schema = z.object({
 
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
 
+  ENCRYPTION_KEY: z.string().min(32).optional(),
+
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
   STRIPE_PRICE_PRO: z.string().optional(),
