@@ -237,11 +237,111 @@ Schema completo será escrito na **Fase 2**.
   - `SettingsPage`: hub navegacional com atalhos p/ Billing e Admin (quando super-admin).
 - [x] 10.3 Rotas agora registradas em `app/routes.tsx`; typecheck limpo.
 
-#### Backlog derivado (para uma Fase 11 futura)
+#### Backlog derivado (para Fase 12+)
 - [ ] Módulo Contatos real (dedup por telefone, histórico unificado, CRUD próprio)
 - [ ] Endpoints de Relatórios por workspace (conversão/board, funil, heatmap)
 - [ ] Edição de perfil e workspace em `SettingsPage`
 - [ ] Auditoria contínua de dark mode conforme novas páginas forem criadas
+
+### Fase 10.1 — Debug round (patches pós-fase 10) 🐛 ✅
+- [x] 10.1.1 Auto-seed default board em `signup`, `workspace.create` e lazy-seed em
+      `kanban.listBoards` (commit `db55fbc`)
+- [x] 10.1.2 KanbanPage com EmptyState + ErrorState, botão "Criar pipeline padrão"
+- [x] 10.1.3 QueryClient com `retry: 1` e backoff exponencial (corta skeleton infinito)
+- [x] 10.1.4 Sidebar colapsada — ícones unificados 18px/stroke 1.9 (commits `e970e71`,
+      `3277d2c`)
+- [x] 10.1.5 **Bug crítico**: `TooltipTrigger asChild` serializava `className`-função
+      do `NavLink` como texto literal → nav colapsada sem estilo. Refatorado para
+      `NavItemLink` com `isActive` calculado via `useLocation` (commit `6fd2614`)
+- [x] 10.1.6 SettingsPage: `<Link>` aninhado dentro de `<Link>` — clique não navegava.
+      Trocado por chevron afordance (commit `bd43036`)
+- [x] 10.1.7 ContactsPage: `listBoards` não inclui `columns.leads` — agora busca cada
+      board completo via `getBoard(id)` e achata (commit `217d5a6`)
+- [x] 10.1.8 Button `asChild` rejeitava filho único do Slot Radix (spinner + children).
+      Quando asChild, renderiza só children (commit `697ebb5`)
+
+---
+
+## Fase 11 — SaaS Commercial (trial, billing, RBAC, painel do dono)
+
+Feedback 2026-04-20: virar o produto em SaaS comercial — trial pago com cartão,
+planos com limites, diferenciação OWNER × AGENT, painel gerencial do dono.
+
+### Regras de negócio fechadas
+- **SUPER_ADMIN** (dono da plataforma, você): painel gerencial vê todos os clientes
+  que compraram, logs individuais, MRR, pode **bloquear cliente inteiro** ou agentes
+  específicos, estender trial, dar cortesia.
+- **Cliente (= WORKSPACE_OWNER)**: se cadastra, coloca cartão, usa 7d grátis, ao
+  fim do trial cobra PRO automático. Gerencia seus próprios workspaces e agentes.
+- **Agente**: não vê billing, não deleta direto — abre `DeletionRequest` que o
+  owner aprova in-app. Owner controla a quais workspaces o agente tem acesso.
+- Role rename: `ADMIN` → `OWNER`, `USER` → `AGENT`.
+
+### Planos
+```
+TRIAL     — 7 dias grátis · exige cartão no signup · full features
+PRO       — R$ 139,00/mês · 3 agentes · 3 workspaces
+BUSINESS  — R$ 347,00/mês · 12 agentes · 10 workspaces
+EXTRAS (ambos):  +R$ 10,00/agente adicional  |  +R$ 39,90/workspace adicional
+```
+Diferença PRO × BUSINESS é somente volume — sem feature-flag exclusiva.
+
+### Trial countdown UX
+Banner fixo no topo do AppShell (só quando `subscription.status = TRIAL`):
+- `> 2 dias` — banner info azul muted ("faltam X dias")
+- `≤ 2 dias` — amarelo + ícone relógio
+- `≤ 1 dia` — laranja pulsante
+- `≤ 12h / 6h / 1h` — vermelho com countdown ao vivo (hh:mm:ss)
+- `≤ 30 min` — vermelho cheio + modal bloqueador ("Confirmar cobrança ou cancelar")
+- CTA: "Ativar PRO agora" → Stripe checkout/portal
+- Toast único por gatilho (2d/1d/12h/6h/1h/30min) via `localStorage` anti-repeat
+- **Backend**: cron BullMQ horário dispara e-mail nos mesmos gatilhos (independente do front)
+
+### Commits previstos (ordem)
+
+- [ ] **11.1 — Modelo Plan + Subscription + Trial com cartão**
+  - Prisma `Plan` (id, name, priceCents, includedAgents, extraAgentCents,
+    includedWorkspaces, extraWorkspaceCents, trialDays)
+  - Prisma `Subscription` (ownerId, planId, status:
+    `TRIAL|ACTIVE|PAST_DUE|BLOCKED|CANCELED`, trialEndsAt, currentPeriodEnd,
+    stripeSubscriptionId, stripeCustomerId, blockedAt, blockReason)
+  - `Workspace.blockedAt`, `Membership.blockedAt`
+  - Seed dos 2 planos
+  - Signup com Stripe SetupIntent obrigatório → cria Subscription TRIAL
+  - `<TrialBanner />` no AppShell com escalas de cor/urgência + toast anti-repeat
+  - Cron BullMQ horário → e-mail nos gatilhos 2d/1d/12h/6h/1h/30min
+
+- [ ] **11.2 — Guards de limite e suspensão**
+  - `PlanLimitGuard`: valida `includedAgents+extras` ao convidar agente e
+    `includedWorkspaces+extras` ao criar workspace
+  - `SubscriptionActiveGuard`: bloqueia rotas quando `BLOCKED/CANCELED`
+  - UI: "Limite do plano atingido — faça upgrade ou compre extra"
+
+- [ ] **11.3 — RBAC OWNER/AGENT + solicitação de exclusão**
+  - Migration rename Role (`ADMIN`→`OWNER`, `USER`→`AGENT`)
+  - Model `DeletionRequest` (workspaceId, requesterId, targetType, targetId,
+    status: `PENDING|APPROVED|REJECTED`, reviewerId, decidedAt, reason)
+  - Endpoints: `POST /deletion-requests`, `GET /deletion-requests?status=PENDING`,
+    `POST /deletion-requests/:id/approve|reject`
+  - Agente: DELETE vira `DeletionRequest` + toast "Solicitação enviada"
+  - Owner: bandeja `/app/settings/requests` com aprovar/negar inline
+  - UI esconde `/app/billing` e gestão de workspace do AGENT
+
+- [ ] **11.4 — Painel SUPER_ADMIN gerencial**
+  - Cards topo: MRR total, clientes ativos, trials em andamento, churn 30d
+  - Tabela de clientes: nome, e-mail, plano, status, MRR individual, #agentes,
+    último login
+  - Detalhe do cliente (`/app/admin/customers/:id`): uso (msgs/sessões/leads),
+    pagamentos, audit log dele, logs por workspace
+  - Ações: bloquear cliente, bloquear agente, estender trial, cortesia,
+    desbloquear, forçar cancelamento
+
+- [ ] **11.5 — Cobrança de extras via Stripe (metered)**
+  - Itens "extra-agent" e "extra-workspace" no Stripe
+  - Ao ultrapassar incluídos, reporta uso ao Stripe no fim do ciclo
+  - Webhook `invoice.payment_failed` → `PAST_DUE`; após N dias → `BLOCKED`
+  - UI de billing mostra preview do próximo ciclo (base + extras)
+  - Portal Stripe para trocar cartão / plano / cancelar
 
 ---
 
