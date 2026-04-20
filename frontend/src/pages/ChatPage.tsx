@@ -282,6 +282,10 @@ function Thread({ conversation }: { conversation: Conversation }) {
       <div
         ref={scrollRef}
         className="flex-1 space-y-1 overflow-y-auto bg-bg-subtle px-8 py-4"
+        style={{
+          backgroundImage: 'radial-gradient(circle at 1px 1px, hsl(var(--border)) 1px, transparent 0)',
+          backgroundSize: '24px 24px',
+        }}
       >
         {messages.map((m) => (
           <MessageBubble key={m.id} msg={m} />
