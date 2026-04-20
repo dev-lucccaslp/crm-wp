@@ -272,10 +272,7 @@ export default function AppShell() {
                   )
                 }
               >
-                <item.icon
-                  className={cn('shrink-0', collapsed ? 'h-5 w-5' : 'h-[18px] w-[18px]')}
-                  strokeWidth={2}
-                />
+                <item.icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.9} />
                 {!collapsed && <span className="truncate">{item.label}</span>}
               </NavLink>
             );
@@ -302,7 +299,7 @@ export default function AppShell() {
                 onClick={toggleSidebar}
                 className="mb-1 flex h-10 w-10 items-center justify-center rounded-md text-fg-muted transition hover:bg-surface-hover hover:text-fg mx-auto"
               >
-                <PanelLeftOpen className="h-[18px] w-[18px]" strokeWidth={2} />
+                <PanelLeftOpen className="h-[18px] w-[18px]" strokeWidth={1.9} />
               </button>
             </QuickTooltip>
           )}
@@ -318,9 +315,9 @@ export default function AppShell() {
                 className="flex h-10 w-10 items-center justify-center rounded-md text-fg-muted transition hover:bg-surface-hover hover:text-fg mx-auto"
               >
                 {theme === 'dark' ? (
-                  <Sun className="h-[18px] w-[18px]" strokeWidth={2} />
+                  <Sun className="h-[18px] w-[18px]" strokeWidth={1.9} />
                 ) : (
-                  <Moon className="h-[18px] w-[18px]" strokeWidth={2} />
+                  <Moon className="h-[18px] w-[18px]" strokeWidth={1.9} />
                 )}
               </button>
             </QuickTooltip>
