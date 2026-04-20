@@ -37,32 +37,41 @@ export default function NewWorkspacePage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-6">
-      <form
-        onSubmit={onSubmit}
-        className="w-full max-w-sm rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
-      >
-        <h1 className="text-2xl font-semibold tracking-tight">Novo workspace</h1>
-        <p className="mt-1 text-sm text-neutral-500">
-          Cada workspace é isolado — seus dados não vazam entre eles.
-        </p>
-
-        <div className="mt-6 flex flex-col gap-4">
-          <Field label="Nome">
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              minLength={2}
-              placeholder="Minha Empresa"
-            />
-          </Field>
-          {error && <p className="text-xs text-red-500">{error}</p>}
-          <Button type="submit" loading={loading}>
-            Criar workspace
-          </Button>
+    <div className="flex min-h-screen items-center justify-center bg-bg p-6 text-fg">
+      <div className="w-full max-w-sm">
+        <div className="mb-8 flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-sm font-bold text-accent-fg shadow-sm">
+            C
+          </div>
+          <span className="text-sm font-semibold tracking-tight">CRM-WP</span>
         </div>
-      </form>
+
+        <form
+          onSubmit={onSubmit}
+          className="w-full rounded-2xl border border-default bg-surface p-8 shadow-card"
+        >
+          <h1 className="text-xl font-semibold tracking-tight text-fg">Novo workspace</h1>
+          <p className="mt-1 text-sm text-fg-muted">
+            Cada workspace é isolado — seus dados não vazam entre eles.
+          </p>
+
+          <div className="mt-6 flex flex-col gap-4">
+            <Field label="Nome">
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                minLength={2}
+                placeholder="Minha Empresa"
+              />
+            </Field>
+            {error && <p className="text-xs text-danger">{error}</p>}
+            <Button type="submit" loading={loading}>
+              Criar workspace
+            </Button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
