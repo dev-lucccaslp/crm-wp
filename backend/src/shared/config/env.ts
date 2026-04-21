@@ -34,6 +34,9 @@ const schema = z.object({
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
   STRIPE_PRICE_PRO: z.string().optional(),
   STRIPE_PRICE_BUSINESS: z.string().optional(),
+  // Add-ons por quantidade (agentes e workspaces extras).
+  STRIPE_PRICE_AGENT_EXTRA: z.string().optional(),
+  STRIPE_PRICE_WORKSPACE_EXTRA: z.string().optional(),
   BILLING_SUCCESS_URL: z
     .string()
     .url()

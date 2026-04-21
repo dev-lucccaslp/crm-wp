@@ -9,10 +9,19 @@ import { PrismaService } from '../../infra/prisma/prisma.service';
 import { slugify, randomSuffix } from '../../shared/utils/slug';
 import { seedDefaultBoard } from '../../shared/utils/seed-default-board';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
+import { BillingService } from '../billing/billing.service';
 
 @Injectable()
 export class WorkspaceService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly billing: BillingService,
+  ) {}
+
+  /** Reconcilia extras do workspace (fire-and-forget, erros só logam). */
+  private fireSync(workspaceId: string) {
+    this.billing.syncExtras(workspaceId).catch(() => {});
+  }
 
   async listMine(userId: string) {
     const memberships = await this.prisma.membership.findMany({
@@ -41,6 +50,13 @@ export class WorkspaceService {
       await seedDefaultBoard(tx, ws.id);
       return ws;
     });
+    // Ajusta extraWorkspaces do OWNER (afeta o workspace primário).
+    const primary = await this.prisma.membership.findFirst({
+      where: { userId, role: 'OWNER' },
+      orderBy: { createdAt: 'asc' },
+      select: { workspaceId: true },
+    });
+    if (primary) this.fireSync(primary.workspaceId);
     return { id: workspace.id, name: workspace.name, slug: workspace.slug, role: 'OWNER' as Role };
   }
 
@@ -77,6 +93,7 @@ export class WorkspaceService {
     const membership = await this.prisma.membership.create({
       data: { userId: user.id, workspaceId, role },
     });
+    this.fireSync(workspaceId);
     return { membershipId: membership.id, userId: user.id, role: membership.role };
   }
 
@@ -98,6 +115,7 @@ export class WorkspaceService {
     });
     if (!membership) throw new NotFoundException('Membro não encontrado');
     await this.prisma.membership.delete({ where: { id: membershipId } });
+    this.fireSync(workspaceId);
     return { success: true };
   }
 }

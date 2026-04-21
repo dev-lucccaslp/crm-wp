@@ -130,10 +130,26 @@ export class BillingService {
       });
     }
 
+    // Add-ons (agentes/workspaces extras) entram como line_items separados,
+    // com quantity já calculada a partir do estado atual do workspace.
+    const agentPriceId = this.config.get('STRIPE_PRICE_AGENT_EXTRA', { infer: true });
+    const wsPriceId = this.config.get('STRIPE_PRICE_WORKSPACE_EXTRA', { infer: true });
+    const snapshot = await this.computeExtras(workspaceId, planId);
+    const line_items = [{ price: priceId, quantity: 1 }] as Array<{
+      price: string;
+      quantity: number;
+    }>;
+    if (agentPriceId && snapshot.extraAgents > 0) {
+      line_items.push({ price: agentPriceId, quantity: snapshot.extraAgents });
+    }
+    if (wsPriceId && snapshot.extraWorkspaces > 0) {
+      line_items.push({ price: wsPriceId, quantity: snapshot.extraWorkspaces });
+    }
+
     const session = await this.stripe.stripe.checkout.sessions.create({
       mode: 'subscription',
       customer: customerId,
-      line_items: [{ price: priceId, quantity: 1 }],
+      line_items,
       client_reference_id: workspaceId,
       metadata: { workspaceId, planId },
       success_url: this.config.get('BILLING_SUCCESS_URL', { infer: true })!,
@@ -253,6 +269,131 @@ export class BillingService {
         return 'CANCELED';
       default:
         return 'INCOMPLETE';
+    }
+  }
+
+  // ─────────────────────────── Extras (metered) ───────────────────────────
+
+  /**
+   * Sincroniza agentes/workspaces extras do workspace com a subscription
+   * no Stripe (via quantity em subscription items). Guarda também em
+   * Subscription.extraAgents / extraWorkspaces para UI.
+   *
+   * Regra:
+   *  - extraAgents = max(0, #memberships - plan.seats)
+   *  - extraWorkspaces conta na subscription do workspace "primário" do OWNER
+   *    (mais antigo). Secundários ficam em 0 para não duplicar cobrança.
+   */
+  /** Cálculo puro de extras (sem escrita). Usado por syncExtras e checkout. */
+  async computeExtras(workspaceId: string, planId?: PlanId) {
+    const sub = planId
+      ? { plan: planId }
+      : await this.prisma.subscription.findUnique({ where: { workspaceId } });
+    const plan = PLANS[sub?.plan ?? 'TRIAL'];
+
+    const memberships = await this.prisma.membership.count({
+      where: { workspaceId },
+    });
+    const extraAgents = Math.max(0, memberships - plan.limits.seats);
+
+    const owner = await this.prisma.membership.findFirst({
+      where: { workspaceId, role: 'OWNER' },
+      select: { userId: true },
+    });
+    let extraWorkspaces = 0;
+    if (owner) {
+      const ownedIds = await this.prisma.membership.findMany({
+        where: { userId: owner.userId, role: 'OWNER' },
+        select: { workspaceId: true, createdAt: true },
+        orderBy: { createdAt: 'asc' },
+      });
+      const primary = ownedIds[0]?.workspaceId;
+      if (primary === workspaceId) {
+        extraWorkspaces = Math.max(0, ownedIds.length - plan.limits.workspaces);
+      }
+    }
+    return { extraAgents, extraWorkspaces };
+  }
+
+  async syncExtras(workspaceId: string) {
+    const sub = await this.prisma.subscription.findUnique({
+      where: { workspaceId },
+    });
+    if (!sub) return;
+    const { extraAgents, extraWorkspaces } = await this.computeExtras(
+      workspaceId,
+      sub.plan,
+    );
+
+    await this.prisma.subscription.update({
+      where: { workspaceId },
+      data: { extraAgents, extraWorkspaces },
+    });
+
+    // Se Stripe ativo + subscription real existente, ajusta items por quantity.
+    if (this.stripe.enabled && sub.stripeSubscriptionId) {
+      await this.upsertStripeExtraItem(
+        sub.stripeSubscriptionId,
+        this.config.get('STRIPE_PRICE_AGENT_EXTRA', { infer: true }),
+        extraAgents,
+      );
+      await this.upsertStripeExtraItem(
+        sub.stripeSubscriptionId,
+        this.config.get('STRIPE_PRICE_WORKSPACE_EXTRA', { infer: true }),
+        extraWorkspaces,
+      );
+    }
+
+    return { extraAgents, extraWorkspaces };
+  }
+
+  private async upsertStripeExtraItem(
+    subscriptionId: string,
+    priceId: string | undefined,
+    quantity: number,
+  ) {
+    if (!priceId) return; // add-on não configurado em env
+    const sub = await this.stripe.stripe.subscriptions.retrieve(subscriptionId);
+    const existing = sub.items.data.find((i) => i.price.id === priceId);
+    if (!existing) {
+      if (quantity <= 0) return; // nada a criar
+      await this.stripe.stripe.subscriptionItems.create({
+        subscription: subscriptionId,
+        price: priceId,
+        quantity,
+        proration_behavior: 'create_prorations',
+      });
+      return;
+    }
+    if (quantity <= 0) {
+      await this.stripe.stripe.subscriptionItems.del(existing.id, {
+        proration_behavior: 'create_prorations',
+      });
+      return;
+    }
+    if (existing.quantity !== quantity) {
+      await this.stripe.stripe.subscriptionItems.update(existing.id, {
+        quantity,
+        proration_behavior: 'create_prorations',
+      });
+    }
+  }
+
+  /** Reconciliação diária: recalcula extras para todas subscriptions ativas. */
+  @Cron(CronExpression.EVERY_DAY_AT_4AM)
+  async reconcileExtras() {
+    const subs = await this.prisma.subscription.findMany({
+      where: { status: { in: ['ACTIVE', 'TRIAL'] } },
+      select: { workspaceId: true },
+    });
+    for (const s of subs) {
+      try {
+        await this.syncExtras(s.workspaceId);
+      } catch (err) {
+        this.log.warn(
+          `syncExtras falhou ws=${s.workspaceId}: ${(err as Error).message}`,
+        );
+      }
     }
   }
 
