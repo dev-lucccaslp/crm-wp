@@ -37,6 +37,7 @@ import {
 import { QuickTooltip } from '../components/ui/Tooltip';
 import { CommandPalette } from '../components/CommandPalette';
 import { PageTransition } from '../components/PageTransition';
+import { TrialBanner } from '../components/TrialBanner';
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -395,10 +396,13 @@ export default function AppShell() {
       </aside>
 
       {/* Main */}
-      <main className="flex flex-1 overflow-hidden bg-bg pt-12 md:pt-0">
-        <PageTransition>
-          <Outlet />
-        </PageTransition>
+      <main className="flex flex-1 flex-col overflow-hidden bg-bg pt-12 md:pt-0">
+        <TrialBanner />
+        <div className="flex flex-1 overflow-hidden">
+          <PageTransition>
+            <Outlet />
+          </PageTransition>
+        </div>
       </main>
     </div>
   );
