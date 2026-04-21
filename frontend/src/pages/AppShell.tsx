@@ -38,6 +38,7 @@ import { QuickTooltip } from '../components/ui/Tooltip';
 import { CommandPalette } from '../components/CommandPalette';
 import { PageTransition } from '../components/PageTransition';
 import { TrialBanner } from '../components/TrialBanner';
+import { useToast } from '../components/ui/Toast';
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -112,10 +113,33 @@ export default function AppShell() {
     toggleMobileSidebar,
   } = useUiStore();
   const location = useLocation();
+  const { toast } = useToast();
+
   // Fecha o drawer mobile ao navegar
   useEffect(() => {
     setMobileSidebar(false);
   }, [location.pathname, setMobileSidebar]);
+
+  // Redireciona para billing quando o backend sinaliza assinatura inativa.
+  useEffect(() => {
+    function handler(e: Event) {
+      const detail = (e as CustomEvent<{ code: string; message?: string }>).detail;
+      toast({
+        title:
+          detail.code === 'TRIAL_EXPIRED'
+            ? 'Seu período de teste expirou'
+            : 'Assinatura inativa',
+        description:
+          detail.message ?? 'Ative um plano para manter o acesso sem interrupção.',
+        variant: 'error',
+      });
+      if (!location.pathname.startsWith('/app/settings/billing')) {
+        navigate('/app/settings/billing');
+      }
+    }
+    window.addEventListener('subscription:inactive', handler);
+    return () => window.removeEventListener('subscription:inactive', handler);
+  }, [navigate, toast, location.pathname]);
   const {
     user,
     workspaces,

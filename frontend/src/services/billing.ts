@@ -1,10 +1,11 @@
 import { api } from './api';
 
-export type PlanId = 'FREE' | 'PRO' | 'ENTERPRISE';
+export type PlanId = 'TRIAL' | 'PRO' | 'BUSINESS';
 export type SubscriptionStatus =
+  | 'TRIAL'
   | 'ACTIVE'
-  | 'TRIALING'
   | 'PAST_DUE'
+  | 'BLOCKED'
   | 'CANCELED'
   | 'INCOMPLETE';
 
@@ -13,12 +14,16 @@ export interface PlanLimits {
   kanbanBoards: number;
   automationRules: number;
   seats: number;
+  workspaces: number;
 }
 
 export interface Plan {
   id: PlanId;
   name: string;
-  priceMonthly: number;
+  priceCents: number;
+  extraAgentCents: number;
+  extraWorkspaceCents: number;
+  trialDays: number;
   limits: PlanLimits;
   features: string[];
 }
@@ -31,8 +36,13 @@ export interface Subscription {
   status: SubscriptionStatus;
   stripeCustomerId: string | null;
   stripeSubscriptionId: string | null;
+  trialEndsAt: string | null;
   currentPeriodEnd: string | null;
   cancelAtPeriodEnd: boolean;
+  blockedAt: string | null;
+  blockReason: string | null;
+  extraAgents: number;
+  extraWorkspaces: number;
   limits: PlanLimits;
 }
 
@@ -43,3 +53,10 @@ export const billingService = {
     api.post<{ url: string }>('/billing/checkout', { planId }).then((r) => r.data),
   portal: () => api.post<{ url: string }>('/billing/portal').then((r) => r.data),
 };
+
+export function formatBRL(cents: number): string {
+  return (cents / 100).toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  });
+}

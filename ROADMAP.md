@@ -299,7 +299,7 @@ Banner fixo no topo do AppShell (só quando `subscription.status = TRIAL`):
 
 ### Commits previstos (ordem)
 
-- [ ] **11.1 — Modelo Plan + Subscription + Trial com cartão**
+- [x] **11.1 — Modelo Plan + Subscription + Trial com cartão** ✅
   - Prisma `Plan` (id, name, priceCents, includedAgents, extraAgentCents,
     includedWorkspaces, extraWorkspaceCents, trialDays)
   - Prisma `Subscription` (ownerId, planId, status:
@@ -311,13 +311,13 @@ Banner fixo no topo do AppShell (só quando `subscription.status = TRIAL`):
   - `<TrialBanner />` no AppShell com escalas de cor/urgência + toast anti-repeat
   - Cron BullMQ horário → e-mail nos gatilhos 2d/1d/12h/6h/1h/30min
 
-- [ ] **11.2 — Guards de limite e suspensão**
+- [x] **11.2 — Guards de limite e suspensão** ✅
   - `PlanLimitGuard`: valida `includedAgents+extras` ao convidar agente e
     `includedWorkspaces+extras` ao criar workspace
   - `SubscriptionActiveGuard`: bloqueia rotas quando `BLOCKED/CANCELED`
   - UI: "Limite do plano atingido — faça upgrade ou compre extra"
 
-- [ ] **11.3 — RBAC OWNER/AGENT + solicitação de exclusão**
+- [x] **11.3 — RBAC OWNER/AGENT + solicitação de exclusão** ✅
   - Migration rename Role (`ADMIN`→`OWNER`, `USER`→`AGENT`)
   - Model `DeletionRequest` (workspaceId, requesterId, targetType, targetId,
     status: `PENDING|APPROVED|REJECTED`, reviewerId, decidedAt, reason)
@@ -327,7 +327,7 @@ Banner fixo no topo do AppShell (só quando `subscription.status = TRIAL`):
   - Owner: bandeja `/app/settings/requests` com aprovar/negar inline
   - UI esconde `/app/billing` e gestão de workspace do AGENT
 
-- [ ] **11.4 — Painel SUPER_ADMIN gerencial**
+- [x] **11.4 — Painel SUPER_ADMIN gerencial** ✅
   - Cards topo: MRR total, clientes ativos, trials em andamento, churn 30d
   - Tabela de clientes: nome, e-mail, plano, status, MRR individual, #agentes,
     último login
@@ -336,7 +336,7 @@ Banner fixo no topo do AppShell (só quando `subscription.status = TRIAL`):
   - Ações: bloquear cliente, bloquear agente, estender trial, cortesia,
     desbloquear, forçar cancelamento
 
-- [ ] **11.5 — Cobrança de extras via Stripe (metered)**
+- [x] **11.5 — Cobrança de extras via Stripe (metered)** ✅
   - Itens "extra-agent" e "extra-workspace" no Stripe
   - Ao ultrapassar incluídos, reporta uso ao Stripe no fim do ciclo
   - Webhook `invoice.payment_failed` → `PAST_DUE`; após N dias → `BLOCKED`
