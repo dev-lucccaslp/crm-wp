@@ -1,6 +1,8 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -11,6 +13,8 @@ import { createHash, randomBytes } from 'crypto';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { slugify, randomSuffix } from '../../shared/utils/slug';
 import { seedDefaultBoard } from '../../shared/utils/seed-default-board';
+import { StripeService } from '../billing/stripe.service';
+import { PLANS } from '../billing/plans';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 
@@ -21,10 +25,13 @@ export interface JwtPayload {
 
 @Injectable()
 export class AuthService {
+  private readonly log = new Logger(AuthService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
+    private readonly stripe: StripeService,
   ) {}
 
   async signup(dto: SignupDto) {
@@ -33,9 +40,40 @@ export class AuthService {
     });
     if (existing) throw new ConflictException('E-mail já cadastrado');
 
+    // Em produção, com Stripe configurado, cartão é obrigatório no trial.
+    if (this.stripe.enabled && !dto.stripePaymentMethodId) {
+      throw new BadRequestException(
+        'É necessário informar um cartão para iniciar o período de teste.',
+      );
+    }
+
     const passwordHash = await argon2.hash(dto.password);
     const baseSlug = slugify(dto.workspaceName) || 'workspace';
     const slug = `${baseSlug}-${randomSuffix()}`;
+
+    const trialDays = PLANS.TRIAL.trialDays;
+    const trialEndsAt = new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000);
+
+    // Pré-cria customer no Stripe (fora da transação DB, pra não segurar lock)
+    let stripeCustomerId: string | null = null;
+    if (this.stripe.enabled && dto.stripePaymentMethodId) {
+      try {
+        const customer = await this.stripe.stripe.customers.create({
+          email: dto.email.toLowerCase(),
+          name: dto.name,
+          payment_method: dto.stripePaymentMethodId,
+          invoice_settings: {
+            default_payment_method: dto.stripePaymentMethodId,
+          },
+        });
+        stripeCustomerId = customer.id;
+      } catch (err) {
+        this.log.error(
+          `Falha ao criar customer Stripe no signup: ${(err as Error).message}`,
+        );
+        throw new BadRequestException('Cartão inválido ou recusado.');
+      }
+    }
 
     const user = await this.prisma.$transaction(async (tx) => {
       const created = await tx.user.create({
@@ -55,6 +93,15 @@ export class AuthService {
         },
       });
       await seedDefaultBoard(tx, workspace.id);
+      await tx.subscription.create({
+        data: {
+          workspaceId: workspace.id,
+          plan: 'TRIAL',
+          status: 'TRIAL',
+          trialEndsAt,
+          stripeCustomerId,
+        },
+      });
       return created;
     });
 
@@ -112,7 +159,23 @@ export class AuthService {
         memberships: {
           select: {
             role: true,
-            workspace: { select: { id: true, name: true, slug: true } },
+            workspace: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                blockedAt: true,
+                subscription: {
+                  select: {
+                    plan: true,
+                    status: true,
+                    trialEndsAt: true,
+                    currentPeriodEnd: true,
+                    blockedAt: true,
+                  },
+                },
+              },
+            },
           },
         },
       },

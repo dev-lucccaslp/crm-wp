@@ -1,4 +1,4 @@
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class SignupDto {
   @IsEmail()
@@ -15,4 +15,12 @@ export class SignupDto {
   @IsString()
   @MinLength(2)
   workspaceName!: string;
+
+  /**
+   * Stripe PaymentMethod id coletado pelo Stripe Elements no frontend.
+   * Obrigatório em produção (trial exige cartão); opcional em dev sem Stripe.
+   */
+  @IsOptional()
+  @IsString()
+  stripePaymentMethodId?: string;
 }

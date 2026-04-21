@@ -9,6 +9,6 @@ import { PlanGuard } from './plan.guard';
 @Module({
   controllers: [BillingController, StripeWebhookController],
   providers: [BillingService, StripeService, PlanGuard],
-  exports: [BillingService, PlanGuard],
+  exports: [BillingService, PlanGuard, StripeService],
 })
 export class BillingModule {}

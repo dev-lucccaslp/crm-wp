@@ -10,11 +10,30 @@ export interface AuthUser {
   isSuperAdmin?: boolean;
 }
 
+export type SubscriptionStatus =
+  | 'TRIAL'
+  | 'ACTIVE'
+  | 'PAST_DUE'
+  | 'BLOCKED'
+  | 'CANCELED'
+  | 'INCOMPLETE';
+export type PlanId = 'TRIAL' | 'PRO' | 'BUSINESS';
+
+export interface WorkspaceSubscription {
+  plan: PlanId;
+  status: SubscriptionStatus;
+  trialEndsAt: string | null;
+  currentPeriodEnd: string | null;
+  blockedAt: string | null;
+}
+
 export interface Workspace {
   id: string;
   name: string;
   slug: string;
   role: Role;
+  blockedAt?: string | null;
+  subscription?: WorkspaceSubscription | null;
 }
 
 interface AuthState {

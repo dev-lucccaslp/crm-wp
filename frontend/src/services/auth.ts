@@ -6,13 +6,38 @@ export interface TokensResponse {
   refreshToken: string;
 }
 
+export type SubscriptionStatus =
+  | 'TRIAL'
+  | 'ACTIVE'
+  | 'PAST_DUE'
+  | 'BLOCKED'
+  | 'CANCELED'
+  | 'INCOMPLETE';
+
+export type PlanId = 'TRIAL' | 'PRO' | 'BUSINESS';
+
+export interface WorkspaceSubscription {
+  plan: PlanId;
+  status: SubscriptionStatus;
+  trialEndsAt: string | null;
+  currentPeriodEnd: string | null;
+  blockedAt: string | null;
+}
+
 export interface MeResponse {
   id: string;
   email: string;
   name: string;
+  isSuperAdmin?: boolean;
   memberships: Array<{
     role: 'ADMIN' | 'USER' | 'AGENT';
-    workspace: { id: string; name: string; slug: string };
+    workspace: {
+      id: string;
+      name: string;
+      slug: string;
+      blockedAt: string | null;
+      subscription: WorkspaceSubscription | null;
+    };
   }>;
 }
 
@@ -22,6 +47,7 @@ export const authService = {
     name: string;
     password: string;
     workspaceName: string;
+    stripePaymentMethodId?: string;
   }) {
     const res = await api.post<TokensResponse>('/auth/signup', data);
     return res.data;
@@ -39,12 +65,19 @@ export const authService = {
   async me(): Promise<{ user: AuthUser; workspaces: Workspace[] }> {
     const { data } = await api.get<MeResponse>('/auth/me');
     return {
-      user: { id: data.id, email: data.email, name: data.name },
+      user: {
+        id: data.id,
+        email: data.email,
+        name: data.name,
+        isSuperAdmin: data.isSuperAdmin ?? false,
+      },
       workspaces: data.memberships.map((m) => ({
         id: m.workspace.id,
         name: m.workspace.name,
         slug: m.workspace.slug,
         role: m.role,
+        blockedAt: m.workspace.blockedAt,
+        subscription: m.workspace.subscription,
       })),
     };
   },
