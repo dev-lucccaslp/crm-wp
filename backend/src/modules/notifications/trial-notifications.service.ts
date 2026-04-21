@@ -40,7 +40,7 @@ export class TrialNotificationsService {
         workspace: {
           include: {
             memberships: {
-              where: { role: 'ADMIN' },
+              where: { role: { in: ['OWNER', 'ADMIN'] } },
               include: { user: true },
             },
           },

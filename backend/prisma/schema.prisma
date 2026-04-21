@@ -10,9 +10,21 @@ datasource db {
 // ============ ENUMS ============
 
 enum Role {
+  OWNER
   ADMIN
   USER
   AGENT
+}
+
+enum DeletionRequestType {
+  WORKSPACE
+  ACCOUNT
+}
+
+enum DeletionRequestStatus {
+  PENDING
+  CANCELED
+  EXECUTED
 }
 
 enum PlanId {
@@ -75,6 +87,7 @@ model User {
   leadMovements  LeadMovement[]
   auditLogs      AuditLog[]
   assignedLeads  Lead[]         @relation("LeadAssignee")
+  deletionRequests DeletionRequest[]
 }
 
 model Workspace {
@@ -97,6 +110,30 @@ model Workspace {
   messages           Message[]
   automationRules    AutomationRule[]
   auditLogs          AuditLog[]
+  deletionRequests   DeletionRequest[]
+}
+
+/**
+ * Pedido de exclusão com período de carência. OWNER solicita, pode cancelar
+ * dentro do prazo; um cron efetiva após scheduledFor.
+ */
+model DeletionRequest {
+  id           String                @id @default(cuid())
+  workspaceId  String
+  userId       String
+  type         DeletionRequestType
+  status       DeletionRequestStatus  @default(PENDING)
+  reason       String?
+  scheduledFor DateTime
+  createdAt    DateTime               @default(now())
+  canceledAt   DateTime?
+  executedAt   DateTime?
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, status])
+  @@index([scheduledFor, status])
 }
 
 model Membership {

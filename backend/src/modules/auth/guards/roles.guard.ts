@@ -22,6 +22,8 @@ export class RolesGuard implements CanActivate {
 
     const req = ctx.switchToHttp().getRequest();
     const role: Role | undefined = req.workspace?.role;
+    // OWNER (dono do workspace) sempre passa — evita reanotar rotas de ADMIN.
+    if (role === 'OWNER') return true;
     if (!role || !required.includes(role)) {
       throw new ForbiddenException('Permissão insuficiente');
     }

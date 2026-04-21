@@ -88,7 +88,7 @@ export class AuthService {
           name: dto.workspaceName,
           slug,
           memberships: {
-            create: { userId: created.id, role: 'ADMIN' },
+            create: { userId: created.id, role: 'OWNER' },
           },
         },
       });

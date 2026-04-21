@@ -35,13 +35,13 @@ export class WorkspaceService {
         data: {
           name: dto.name,
           slug,
-          memberships: { create: { userId, role: 'ADMIN' } },
+          memberships: { create: { userId, role: 'OWNER' } },
         },
       });
       await seedDefaultBoard(tx, ws.id);
       return ws;
     });
-    return { id: workspace.id, name: workspace.name, slug: workspace.slug, role: 'ADMIN' as Role };
+    return { id: workspace.id, name: workspace.name, slug: workspace.slug, role: 'OWNER' as Role };
   }
 
   async listMembers(workspaceId: string) {
