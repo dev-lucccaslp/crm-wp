@@ -1,6 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { adminService } from '../services/admin';
+import { useToast } from '../components/ui/Toast';
 import { Badge } from '../components/ui/Badge';
 import { Skeleton } from '../components/ui/Skeleton';
 import { cn } from '../lib/cn';
@@ -126,9 +127,33 @@ function MetricsView() {
 }
 
 function WorkspacesView() {
+  const qc = useQueryClient();
+  const { toast } = useToast();
   const { data, isLoading } = useQuery({
     queryKey: ['admin', 'workspaces'],
     queryFn: adminService.workspaces,
+  });
+
+  const block = useMutation({
+    mutationFn: (id: string) => adminService.blockWorkspace(id),
+    onSuccess: () => {
+      toast({ title: 'Workspace bloqueado' });
+      qc.invalidateQueries({ queryKey: ['admin', 'workspaces'] });
+    },
+  });
+  const unblock = useMutation({
+    mutationFn: (id: string) => adminService.unblockWorkspace(id),
+    onSuccess: () => {
+      toast({ title: 'Workspace desbloqueado' });
+      qc.invalidateQueries({ queryKey: ['admin', 'workspaces'] });
+    },
+  });
+  const forceDelete = useMutation({
+    mutationFn: (id: string) => adminService.forceDeleteWorkspace(id),
+    onSuccess: () => {
+      toast({ title: 'Workspace removido', variant: 'error' });
+      qc.invalidateQueries({ queryKey: ['admin', 'workspaces'] });
+    },
   });
 
   if (isLoading) return <Skeleton className="h-64" />;
@@ -146,6 +171,7 @@ function WorkspacesView() {
             <th className="px-3 py-2 text-right">Leads</th>
             <th className="px-3 py-2 text-right">Conversas</th>
             <th className="px-3 py-2">Criado</th>
+            <th className="px-3 py-2 text-right">Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -181,6 +207,39 @@ function WorkspacesView() {
               </td>
               <td className="px-3 py-2 text-fg-muted">
                 {formatDate(w.createdAt)}
+              </td>
+              <td className="px-3 py-2 text-right">
+                <div className="flex justify-end gap-1">
+                  {w.status === 'BLOCKED' || w.blockedAt ? (
+                    <button
+                      onClick={() => unblock.mutate(w.id)}
+                      className="rounded-md border border-default px-2 py-1 text-[11px] font-medium hover:bg-bg"
+                    >
+                      Desbloquear
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => block.mutate(w.id)}
+                      className="rounded-md border border-default px-2 py-1 text-[11px] font-medium hover:bg-bg"
+                    >
+                      Bloquear
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      if (
+                        confirm(
+                          `Excluir definitivamente "${w.name}"? Esta ação é irreversível.`,
+                        )
+                      ) {
+                        forceDelete.mutate(w.id);
+                      }
+                    }}
+                    className="rounded-md border border-[hsl(var(--danger)/0.4)] px-2 py-1 text-[11px] font-medium text-danger hover:bg-[hsl(var(--danger)/0.1)]"
+                  >
+                    Excluir
+                  </button>
+                </div>
               </td>
             </tr>
           ))}

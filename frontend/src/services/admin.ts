@@ -5,8 +5,10 @@ export interface AdminWorkspace {
   name: string;
   slug: string;
   createdAt: string;
+  blockedAt: string | null;
   plan: string;
   status: string;
+  trialEndsAt: string | null;
   members: number;
   instances: number;
   leads: number;
@@ -58,4 +60,11 @@ export const adminService = {
     api
       .get<AdminAuditLog[]>('/admin/audit-logs', { params: { limit } })
       .then((r) => r.data),
+
+  blockWorkspace: (id: string, reason?: string) =>
+    api.post(`/admin/workspaces/${id}/block`, { reason }).then((r) => r.data),
+  unblockWorkspace: (id: string) =>
+    api.post(`/admin/workspaces/${id}/unblock`).then((r) => r.data),
+  forceDeleteWorkspace: (id: string) =>
+    api.delete(`/admin/workspaces/${id}`).then((r) => r.data),
 };

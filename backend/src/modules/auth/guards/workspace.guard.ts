@@ -31,6 +31,12 @@ export class WorkspaceGuard implements CanActivate {
     if (!membership) {
       throw new ForbiddenException('Sem acesso a este workspace');
     }
+    if (membership.blockedAt) {
+      throw new ForbiddenException({
+        code: 'MEMBERSHIP_BLOCKED',
+        message: 'Seu acesso a este workspace foi bloqueado.',
+      });
+    }
 
     req.workspace = { id: workspaceId, role: membership.role };
     return true;

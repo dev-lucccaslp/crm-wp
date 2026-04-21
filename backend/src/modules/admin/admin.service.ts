@@ -1,9 +1,96 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 
 @Injectable()
 export class AdminService {
   constructor(private readonly prisma: PrismaService) {}
+
+  // ─────────────── Moderação (SUPER_ADMIN) ───────────────
+
+  async getWorkspace(id: string) {
+    const ws = await this.prisma.workspace.findUnique({
+      where: { id },
+      include: {
+        subscription: true,
+        memberships: {
+          include: { user: { select: { id: true, email: true, name: true } } },
+          orderBy: { createdAt: 'asc' },
+        },
+        deletionRequests: { orderBy: { createdAt: 'desc' } },
+      },
+    });
+    if (!ws) throw new NotFoundException('Workspace não encontrado');
+    return ws;
+  }
+
+  async blockWorkspace(id: string, reason?: string) {
+    await this.ensureWorkspace(id);
+    await this.prisma.$transaction([
+      this.prisma.workspace.update({
+        where: { id },
+        data: { blockedAt: new Date() },
+      }),
+      this.prisma.subscription.updateMany({
+        where: { workspaceId: id },
+        data: {
+          status: 'BLOCKED',
+          blockedAt: new Date(),
+          blockReason: reason ?? 'bloqueado por SUPER_ADMIN',
+        },
+      }),
+    ]);
+    return { success: true };
+  }
+
+  async unblockWorkspace(id: string) {
+    await this.ensureWorkspace(id);
+    await this.prisma.$transaction([
+      this.prisma.workspace.update({
+        where: { id },
+        data: { blockedAt: null },
+      }),
+      this.prisma.subscription.updateMany({
+        where: { workspaceId: id, status: 'BLOCKED' },
+        data: { status: 'ACTIVE', blockedAt: null, blockReason: null },
+      }),
+    ]);
+    return { success: true };
+  }
+
+  async blockMembership(id: string) {
+    const m = await this.prisma.membership.findUnique({ where: { id } });
+    if (!m) throw new NotFoundException('Membro não encontrado');
+    await this.prisma.membership.update({
+      where: { id },
+      data: { blockedAt: new Date() },
+    });
+    return { success: true };
+  }
+
+  async unblockMembership(id: string) {
+    const m = await this.prisma.membership.findUnique({ where: { id } });
+    if (!m) throw new NotFoundException('Membro não encontrado');
+    await this.prisma.membership.update({
+      where: { id },
+      data: { blockedAt: null },
+    });
+    return { success: true };
+  }
+
+  /** Exclusão imediata, sem carência (uso administrativo). */
+  async forceDeleteWorkspace(id: string) {
+    await this.ensureWorkspace(id);
+    await this.prisma.workspace.delete({ where: { id } });
+    return { success: true };
+  }
+
+  private async ensureWorkspace(id: string) {
+    const w = await this.prisma.workspace.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!w) throw new NotFoundException('Workspace não encontrado');
+  }
 
   async listWorkspaces() {
     const rows = await this.prisma.workspace.findMany({
@@ -13,7 +100,10 @@ export class AdminService {
         name: true,
         slug: true,
         createdAt: true,
-        subscription: { select: { plan: true, status: true } },
+        blockedAt: true,
+        subscription: {
+          select: { plan: true, status: true, trialEndsAt: true, blockedAt: true },
+        },
         _count: {
           select: {
             memberships: true,
@@ -29,8 +119,10 @@ export class AdminService {
       name: w.name,
       slug: w.slug,
       createdAt: w.createdAt,
+      blockedAt: w.blockedAt,
       plan: w.subscription?.plan ?? 'TRIAL',
       status: w.subscription?.status ?? 'TRIAL',
+      trialEndsAt: w.subscription?.trialEndsAt ?? null,
       members: w._count.memberships,
       instances: w._count.whatsappInstances,
       leads: w._count.leads,
