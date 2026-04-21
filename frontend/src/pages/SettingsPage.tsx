@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { CreditCard, User, Building2, Shield, ChevronRight } from 'lucide-react';
 import { useAuthStore } from '../store/auth-store';
+import { DangerZone } from '../components/DangerZone';
 
 interface Row {
   icon: typeof User;
@@ -97,6 +98,10 @@ export default function SettingsPage() {
             );
           })}
         </div>
+
+        {current && current.role === 'OWNER' && (
+          <DangerZone workspaceName={current.name} />
+        )}
       </div>
     </div>
   );
