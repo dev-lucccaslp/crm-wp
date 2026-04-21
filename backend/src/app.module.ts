@@ -22,6 +22,7 @@ import { ChatModule } from './modules/chat/chat.module';
 import { AutomationModule } from './modules/automation/automation.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -72,6 +73,7 @@ import { AdminModule } from './modules/admin/admin.module';
     AutomationModule,
     BillingModule,
     AdminModule,
+    NotificationsModule,
   ],
   controllers: [HealthController],
   providers: [

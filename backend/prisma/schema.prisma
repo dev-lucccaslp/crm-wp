@@ -143,6 +143,7 @@ model Subscription {
   blockReason          String?
   extraAgents          Int                @default(0)
   extraWorkspaces      Int                @default(0)
+  notifiedTriggers     String[]           @default([])
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
 

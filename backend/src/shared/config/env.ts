@@ -42,6 +42,11 @@ const schema = z.object({
     .string()
     .url()
     .default('http://localhost:5173/app/settings/billing?canceled=1'),
+
+  // E-mail (pluggable provider). Sem RESEND_API_KEY → console stub (dev).
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().default('CRM WP <no-reply@crm.local>'),
+  APP_BASE_URL: z.string().url().default('http://localhost:5173'),
 });
 
 export type Env = z.infer<typeof schema>;
