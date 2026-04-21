@@ -16,15 +16,16 @@ enum Role {
 }
 
 enum PlanId {
-  FREE
+  TRIAL
   PRO
-  ENTERPRISE
+  BUSINESS
 }
 
 enum SubscriptionStatus {
+  TRIAL
   ACTIVE
-  TRIALING
   PAST_DUE
+  BLOCKED
   CANCELED
   INCOMPLETE
 }
@@ -77,11 +78,12 @@ model User {
 }
 
 model Workspace {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   name      String
-  slug      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  slug      String    @unique
+  blockedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   memberships        Membership[]
   subscription       Subscription?
@@ -98,11 +100,12 @@ model Workspace {
 }
 
 model Membership {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   userId      String
   workspaceId String
-  role        Role     @default(USER)
-  createdAt   DateTime @default(now())
+  role        Role      @default(USER)
+  blockedAt   DateTime?
+  createdAt   DateTime  @default(now())
 
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
@@ -129,12 +132,17 @@ model RefreshToken {
 model Subscription {
   id                   String             @id @default(cuid())
   workspaceId          String             @unique
-  plan                 PlanId             @default(FREE)
-  status               SubscriptionStatus @default(ACTIVE)
+  plan                 PlanId             @default(TRIAL)
+  status               SubscriptionStatus @default(TRIAL)
   stripeCustomerId     String?            @unique
   stripeSubscriptionId String?            @unique
+  trialEndsAt          DateTime?
   currentPeriodEnd     DateTime?
   cancelAtPeriodEnd    Boolean            @default(false)
+  blockedAt            DateTime?
+  blockReason          String?
+  extraAgents          Int                @default(0)
+  extraWorkspaces      Int                @default(0)
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
 

@@ -36,7 +36,12 @@ export class BillingService {
     const sub = await this.prisma.subscription.upsert({
       where: { workspaceId },
       update: {},
-      create: { workspaceId, plan: 'FREE', status: 'ACTIVE' },
+      create: {
+        workspaceId,
+        plan: 'TRIAL',
+        status: 'TRIAL',
+        trialEndsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
     });
     const plan = PLANS[sub.plan];
     return { ...sub, limits: plan.limits, planName: plan.name };
@@ -46,7 +51,10 @@ export class BillingService {
     return Object.values(PLANS).map((p) => ({
       id: p.id,
       name: p.name,
-      priceMonthly: p.priceMonthly,
+      priceCents: p.priceCents,
+      extraAgentCents: p.extraAgentCents,
+      extraWorkspaceCents: p.extraWorkspaceCents,
+      trialDays: p.trialDays,
       limits: p.limits,
       features: p.features,
     }));
@@ -56,9 +64,9 @@ export class BillingService {
     const sub = await this.prisma.subscription.findUnique({
       where: { workspaceId },
     });
-    if (!sub) return 'FREE';
-    const activeStatuses: SubscriptionStatus[] = ['ACTIVE', 'TRIALING'];
-    return activeStatuses.includes(sub.status) ? sub.plan : 'FREE';
+    if (!sub) return 'TRIAL';
+    const activeStatuses: SubscriptionStatus[] = ['ACTIVE', 'TRIAL'];
+    return activeStatuses.includes(sub.status) ? sub.plan : 'TRIAL';
   }
 
   // ─────────────────────────── Limits ───────────────────────────
@@ -84,6 +92,10 @@ export class BillingService {
         return this.prisma.automationRule.count({ where: { workspaceId } });
       case 'seats':
         return this.prisma.membership.count({ where: { workspaceId } });
+      case 'workspaces':
+        // workspaces é contado por owner (ver PlanLimitGuard) — aqui no
+        // contexto de workspace único, usamos 1.
+        return 1;
     }
   }
 
@@ -93,8 +105,8 @@ export class BillingService {
     if (!this.stripe.enabled) {
       throw new BadRequestException('Stripe não configurado neste ambiente.');
     }
-    if (planId === 'FREE') {
-      throw new BadRequestException('Plano Free não requer checkout.');
+    if (planId === 'TRIAL') {
+      throw new BadRequestException('Trial é ativado automaticamente no signup.');
     }
     const cfg = PLANS[planId];
     const priceEnvKey = cfg.stripePriceEnvKey;
@@ -220,12 +232,12 @@ export class BillingService {
   }
 
   private planFromPriceId(priceId: string | undefined): PlanId {
-    if (!priceId) return 'FREE';
+    if (!priceId) return 'TRIAL';
     const pro = this.config.get('STRIPE_PRICE_PRO', { infer: true });
-    const ent = this.config.get('STRIPE_PRICE_ENTERPRISE', { infer: true });
-    if (priceId === ent) return 'ENTERPRISE';
+    const business = this.config.get('STRIPE_PRICE_BUSINESS', { infer: true });
+    if (priceId === business) return 'BUSINESS';
     if (priceId === pro) return 'PRO';
-    return 'FREE';
+    return 'TRIAL';
   }
 
   private mapStatus(s: StripeSubscription['status']): SubscriptionStatus {
@@ -233,7 +245,7 @@ export class BillingService {
       case 'active':
         return 'ACTIVE';
       case 'trialing':
-        return 'TRIALING';
+        return 'TRIAL';
       case 'past_due':
       case 'unpaid':
         return 'PAST_DUE';
@@ -256,7 +268,7 @@ export class BillingService {
       this.log.warn(`downgrading workspace ${s.workspaceId} (past_due > 3d)`);
       await this.prisma.subscription.update({
         where: { workspaceId: s.workspaceId },
-        data: { status: 'CANCELED', plan: 'FREE' },
+        data: { status: 'BLOCKED', blockedAt: new Date(), blockReason: 'past_due > 3d' },
       });
     }
   }
