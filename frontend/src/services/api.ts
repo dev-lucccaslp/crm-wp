@@ -52,6 +52,18 @@ api.interceptors.response.use(
         return api.request(original);
       }
     }
+
+    // 403 de assinatura: sinaliza via CustomEvent p/ a UI (TrialBanner/redirect).
+    if (error.response?.status === 403) {
+      const data = error.response.data as { code?: string; message?: string } | undefined;
+      if (data?.code === 'SUBSCRIPTION_BLOCKED' || data?.code === 'TRIAL_EXPIRED') {
+        window.dispatchEvent(
+          new CustomEvent('subscription:inactive', {
+            detail: { code: data.code, message: data.message },
+          }),
+        );
+      }
+    }
     return Promise.reject(error);
   },
 );

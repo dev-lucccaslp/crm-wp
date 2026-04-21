@@ -26,7 +26,9 @@ import { WorkspaceService } from './workspace.service';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 import { InviteMemberDto } from './dto/invite-member.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
+import { AllowInactiveSub } from '../billing/subscription-active.guard';
 
+@AllowInactiveSub()
 @UseGuards(JwtAuthGuard)
 @Controller('workspaces')
 export class WorkspaceController {

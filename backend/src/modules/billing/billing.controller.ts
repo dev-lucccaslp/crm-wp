@@ -13,7 +13,9 @@ import { CurrentUser, type AuthUser } from '../auth/decorators/current-user.deco
 
 import { BillingService } from './billing.service';
 import { CreateCheckoutDto } from './dto';
+import { AllowInactiveSub } from './subscription-active.guard';
 
+@AllowInactiveSub()
 @UseGuards(JwtAuthGuard, WorkspaceGuard)
 @Controller('billing')
 export class BillingController {

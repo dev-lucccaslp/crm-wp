@@ -23,6 +23,7 @@ import { AutomationModule } from './modules/automation/automation.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { SubscriptionActiveGuard } from './modules/billing/subscription-active.guard';
 
 @Module({
   imports: [
@@ -78,6 +79,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
   controllers: [HealthController],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: SubscriptionActiveGuard },
     { provide: APP_INTERCEPTOR, useClass: AuditLogInterceptor },
   ],
 })
